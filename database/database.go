@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -21,7 +22,10 @@ func InitDB() {
 		log.Fatalf("Gagal terhubung ke database SQLite: %v", err)
 	}
 
-	err = DB.AutoMigrate(&models.TransactionRecord{})
+	err = DB.AutoMigrate(
+		&models.User{},
+		&models.TransactionRecord{},
+	)
 	if err != nil {
 		log.Fatalf("Gagal migrasi database: %v", err)
 	}
@@ -30,11 +34,23 @@ func InitDB() {
 	log.Println("Database SQLite siap dan tersinkronisasi!")
 }
 
-// Data inisialisasi awal (disamarkan untuk demonstrasi portofolio publik)
 func seedInitialData() {
-	var count int64
-	DB.Model(&models.TransactionRecord{}).Count(&count)
-	if count > 0 {
+	var userCount int64
+	DB.Model(&models.User{}).Count(&userCount)
+	if userCount == 0 {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+		defaultAdmin := models.User{
+			Username: "admin",
+			Password: string(hashedPassword),
+			FullName: "Administrator Kantor",
+			Role:     "admin",
+		}
+		DB.Create(&defaultAdmin)
+	}
+
+	var recordCount int64
+	DB.Model(&models.TransactionRecord{}).Count(&recordCount)
+	if recordCount > 0 {
 		return
 	}
 
@@ -48,8 +64,6 @@ func seedInitialData() {
 	poTotalDeal := 6500000.0
 	diffUnit := 700000.0 - 650000.0
 	diffTotal := 7000000.0 - 6500000.0
-
-	date2, _ := time.Parse("2006-01-02", "2026-10-15")
 
 	sampleRecords := []models.TransactionRecord{
 		{
@@ -73,21 +87,6 @@ func seedInitialData() {
 			UnitPriceDiff:  &diffUnit,
 			TotalPriceDiff: &diffTotal,
 			Notes:          "Diskon volume",
-			IsDelivered:    "belum",
-			IsPaid:         "belum",
-		},
-		{
-			OfferDate:     date2,
-			OfferQty:      2,
-			OfferUnit:     "lot",
-			OfferItemName: "Repair PIN Impeller Pump & Special Tools",
-			Materials:     "As Shaft SUS 304 dia 4mm, As ST.45 dia 4mm, Borring + Welder",
-			ClientCompany: "client-a",
-			ClientPIC:     "hendra",
-			OfferPrice:    450000,
-			OfferTotal:    900000,
-			POStatus:       "belum",
-			Notes:          "",
 			IsDelivered:    "belum",
 			IsPaid:         "belum",
 		},

@@ -12,8 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 1. TAMBAH BARIS PENAWARAN BARU (Menyimpan Nama Barang + Rincian Bahan jika ada)
-// POST /api/v1/records
 func CreateOfferRecord(c *gin.Context) {
 	var req models.CreateOfferRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -33,7 +31,7 @@ func CreateOfferRecord(c *gin.Context) {
 		OfferQty:      req.OfferQty,
 		OfferUnit:     req.OfferUnit,
 		OfferItemName: req.OfferItemName,
-		Materials:     req.Materials, // Kolom bahan tersimpan di database
+		Materials:     req.Materials,
 		ClientCompany: strings.ToLower(strings.TrimSpace(req.ClientCompany)),
 		ClientPIC:     strings.ToLower(strings.TrimSpace(req.ClientPIC)),
 		OfferPrice:    req.OfferPrice,
@@ -55,15 +53,13 @@ func CreateOfferRecord(c *gin.Context) {
 	})
 }
 
-// 2. LIHAT DAFTAR TRANSAKSI
-// GET /api/v1/records?po_status=belum&delivered=belum&client=aio
 func GetRecords(c *gin.Context) {
 	poStatus := c.Query("po_status")
 	delivered := c.Query("delivered")
 	paid := c.Query("paid")
 	client := c.Query("client")
 	pic := c.Query("pic")
-	poNumber := c.Query("po_number") // Bisa filter by No PO untuk kasus 1 PO isi banyak barang
+	poNumber := c.Query("po_number")
 
 	query := database.DB.Model(&models.TransactionRecord{})
 
@@ -95,13 +91,11 @@ func GetRecords(c *gin.Context) {
 	})
 }
 
-// 3. SMART DETECTIVE MATCHER (Mencari di Nama Barang DAN di Kolom Material secara independen)
-// GET /api/v1/records/smart-match?client=aio&keyword=kunci togel&material=sus 304&qty=31
 func SmartMatchRecord(c *gin.Context) {
 	client := strings.ToLower(strings.TrimSpace(c.Query("client")))
 	pic := strings.ToLower(strings.TrimSpace(c.Query("pic")))
-	keyword := strings.ToLower(strings.TrimSpace(c.Query("keyword")))   // Teks apa pun yang tertera di PO klien
-	material := strings.ToLower(strings.TrimSpace(c.Query("material"))) // Pencarian spesifik bahan jika diinginkan
+	keyword := strings.ToLower(strings.TrimSpace(c.Query("keyword")))
+	material := strings.ToLower(strings.TrimSpace(c.Query("material")))
 	qtyStr := strings.TrimSpace(c.Query("qty"))
 	priceStr := strings.TrimSpace(c.Query("price"))
 
@@ -120,7 +114,6 @@ func SmartMatchRecord(c *gin.Context) {
 
 	var results []models.SmartMatchResult
 
-	// Jika ada parameter material khusus, gabungkan ke keyword pencarian
 	searchTerm := keyword
 	if searchTerm == "" && material != "" {
 		searchTerm = material
@@ -138,7 +131,6 @@ func SmartMatchRecord(c *gin.Context) {
 		itemNameMatched := false
 		materialMatched := false
 
-		// 1. Cek Perusahaan Klien
 		if client != "" {
 			if strings.Contains(rec.ClientCompany, client) || strings.Contains(client, rec.ClientCompany) {
 				score += 30
@@ -147,7 +139,6 @@ func SmartMatchRecord(c *gin.Context) {
 			}
 		}
 
-		// 2. Cek PIC
 		if pic != "" && rec.ClientPIC != "" {
 			if strings.Contains(rec.ClientPIC, pic) || strings.Contains(pic, rec.ClientPIC) {
 				score += 20
@@ -156,14 +147,12 @@ func SmartMatchRecord(c *gin.Context) {
 			}
 		}
 
-		// 3. Cek Quantity
 		if targetQty > 0 && rec.OfferQty == targetQty {
 			score += 25
 			qtyMatched = true
 			reasons = append(reasons, "QTY cocok persis ("+strconv.Itoa(rec.OfferQty)+")")
 		}
 
-		// 4. Cek Pencarian di NAMA BARANG UTAMA
 		if searchTerm != "" {
 			combinedName := strings.ToLower(rec.OfferItemName)
 			cleanName := strings.ReplaceAll(strings.ReplaceAll(combinedName, ".", ""), " ", "")
@@ -175,18 +164,15 @@ func SmartMatchRecord(c *gin.Context) {
 			}
 		}
 
-		// 5. Cek Pencarian di RINCIAN MATERIAL / BAHAN (Independen dari nama barang utama!)
 		if searchTerm != "" && rec.Materials != "" {
 			combinedMat := strings.ToLower(rec.Materials)
 			cleanMat := strings.ReplaceAll(strings.ReplaceAll(combinedMat, ".", ""), " ", "")
 
-			// A. Cocok kalimat/frasa bahan
 			if strings.Contains(combinedMat, searchTerm) || (len(cleanSearch) >= 3 && strings.Contains(cleanMat, cleanSearch)) {
 				score += 40
 				materialMatched = true
 				reasons = append(reasons, "Spesifikasi bahan/material cocok langsung: '"+searchTerm+"'")
 			} else {
-				// B. Cocok pecahan kata spesifikasi (misal: "sus 304", "tebal 1.5mm", "dia 4mm")
 				words := strings.Fields(searchTerm)
 				matchWords := 0
 				for _, w := range words {
@@ -203,7 +189,6 @@ func SmartMatchRecord(c *gin.Context) {
 			}
 		}
 
-		// 6. Cek Harga & Toleransi Diskon Nego
 		if targetPrice > 0 {
 			if rec.OfferPrice == targetPrice || rec.OfferTotal == targetPrice {
 				score += 20
@@ -241,8 +226,6 @@ func SmartMatchRecord(c *gin.Context) {
 	})
 }
 
-// 4. ATTACH PO: Masukkan data PO klien ke baris penawaran yang sudah match
-// PATCH /api/v1/records/:id/attach-po
 func AttachPOToRecord(c *gin.Context) {
 	id := c.Param("id")
 	var req models.AttachPORequest
@@ -304,13 +287,11 @@ func AttachPOToRecord(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Data PO klien berhasil dihubungkan ke baris penawaran!",
+		"message": "Data PO klien berhasil dihubungkan ke baris penawaran",
 		"data":    rec,
 	})
 }
 
-// 5. UPDATE STATUS PENGIRIMAN & PEMBAYARAN
-// PATCH /api/v1/records/:id/status
 func UpdateOperationalStatus(c *gin.Context) {
 	id := c.Param("id")
 	var req models.UpdateStatusRequest

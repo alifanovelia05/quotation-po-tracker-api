@@ -5,15 +5,14 @@ import (
 
 	"project1/database"
 	"project1/handlers"
+	"project1/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Inisialisasi Database SQLite
 	database.InitDB()
 
-	// Inisialisasi Gin Engine
 	r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
@@ -26,20 +25,21 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 	{
-		// 1. Tambah baris penawaran baru
-		v1.POST("/records", handlers.CreateOfferRecord)
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", handlers.Register)
+			auth.POST("/login", handlers.Login)
+		}
 
-		// 2. Lihat & filter daftar transaksi (po_status, delivered, paid, client, pic, po_number)
-		v1.GET("/records", handlers.GetRecords)
-
-		// 3. Smart Detective Matcher: Cari baris yang cocok ketika email PO klien masuk
-		v1.GET("/records/smart-match", handlers.SmartMatchRecord)
-
-		// 4. Attach PO Klien ke baris penawaran
-		v1.PATCH("/records/:id/attach-po", handlers.AttachPOToRecord)
-
-		// 5. Update Status Pengiriman & Pembayaran
-		v1.PATCH("/records/:id/status", handlers.UpdateOperationalStatus)
+		protected := v1.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.POST("/records", handlers.CreateOfferRecord)
+			protected.GET("/records", handlers.GetRecords)
+			protected.GET("/records/smart-match", handlers.SmartMatchRecord)
+			protected.PATCH("/records/:id/attach-po", handlers.AttachPOToRecord)
+			protected.PATCH("/records/:id/status", handlers.UpdateOperationalStatus)
+		}
 	}
 
 	log.Println("Server berjalan di http://localhost:8080")
