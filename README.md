@@ -19,12 +19,13 @@ Manually matching incoming POs against hundreds of quotation records in spreadsh
 
 ---
 
-## 💡 Solution: Rule-Based Intelligent Matching Engine
+## 💡 Solution: Rule-Based Intelligent Matching Engine & JWT Security
 
-This REST API provides an automated backend service with a **Heuristic Multi-Factor Scoring Engine** that instantly matches incoming client POs to active quotation drafts without relying strictly on exact item names.
+This REST API provides an automated backend service with a **Heuristic Multi-Factor Scoring Engine** that instantly matches incoming client POs to active quotation drafts without relying strictly on exact item names, secured by **JWT (JSON Web Token) Authentication**.
 
 ### Key Architectural Highlights:
-* **Separation of Concerns:** Clean architecture cleanly isolating HTTP routing (`main.go`), business controllers (`handlers/`), data persistence (`database/`), and domain transfer models (`models/`).
+* **Separation of Concerns:** Clean architecture cleanly isolating HTTP routing (`main.go`), business controllers (`handlers/`), data persistence (`database/`), authentication middleware (`middleware/`), and domain transfer models (`models/`).
+* **Stateless JWT Authentication:** Built-in authentication middleware protecting sensitive transaction endpoints while hashing passwords using `bcrypt`.
 * **Multi-Factor Scoring Engine:** Evaluates candidates across enterprise client matching (+30), PIC alignment (+20), exact quantity parity (+25), primary item name fuzzy search (+35), material/dimension substring matching (+40), and commercial price-tolerance bounds (+15).
 * **Consolidated PO Support:** Gracefully maps multiple individual quotation records to a single incoming client PO number.
 * **Audit & Lifecycle Tracking:** Automates variance calculations (`unit_price_diff`, `total_price_diff`) and tracks operational fulfillment (`is_delivered`) and payment statuses (`is_paid`).
@@ -33,16 +34,31 @@ This REST API provides an automated backend service with a **Heuristic Multi-Fac
 
 ## 🏗️ Architecture & Technology Stack
 
-* **Language:** Go (1.24+)
+* **Language:** Go (1.26+)
 * **HTTP Framework:** [Gin Web Framework](https://github.com/gin-gonic/gin)
 * **ORM & Database:** [GORM](https://gorm.io/) with pure-Go SQLite driver (`github.com/glebarez/sqlite`)
+* **Security & Auth:** [Golang JWT v5](https://github.com/golang-jwt/jwt) & `golang.org/x/crypto/bcrypt`
 * **Data Interchange:** Clean JSON DTOs with strict binding validations
 
 ---
 
 ## 🚀 API Specification
 
-### 1. Create New Quotation Record
+### 1. Authentication Endpoints (Public)
+
+* **Register New User:**
+  * `POST /api/v1/auth/register`
+  * Body: `{"username":"staff1", "password":"password123", "full_name":"Operations Staff", "role":"staff"}`
+* **User Login:**
+  * `POST /api/v1/auth/login`
+  * Body: `{"username":"admin", "password":"password123"}`
+  * Response returns a signed Bearer JWT token valid for 24 hours.
+
+---
+
+### 2. Protected Business Endpoints (Requires `Authorization: Bearer <token>`)
+
+#### A. Create New Quotation Record
 * **Endpoint:** `POST /api/v1/records`
 * **Request Body:**
 ```json
@@ -59,7 +75,7 @@ This REST API provides an automated backend service with a **Heuristic Multi-Fac
 }
 ```
 
-### 2. Smart Detective Matching (Identify Quotation from PO)
+#### B. Smart Detective Matching (Identify Quotation from PO)
 When a client sends an ambiguous PO, query the matching engine:
 * **Endpoint:** `GET /api/v1/records/smart-match?client=client-manufacturing&keyword=Baut L M8&qty=2`
 * **Response Sample:**
@@ -90,7 +106,7 @@ When a client sends an ambiguous PO, query the matching engine:
 }
 ```
 
-### 3. Attach Official Client Purchase Order
+#### C. Attach Official Client Purchase Order
 Once the target quotation is identified, link the client's PO:
 * **Endpoint:** `PATCH /api/v1/records/:id/attach-po`
 * **Request Body:**
@@ -105,9 +121,8 @@ Once the target quotation is identified, link the client's PO:
   "notes": "Discount negotiated"
 }
 ```
-* **Result:** Automatically marks `po_status: "sudah"`, calculates `unit_price_diff: 50000`, and links the official purchase order.
 
-### 4. Operational & Delivery Tracking
+#### D. Operational & Delivery Tracking
 * **Filter Pending Orders:** `GET /api/v1/records?po_status=sudah&delivered=belum`
 * **Filter Unpaid Invoices:** `GET /api/v1/records?delivered=sudah&paid=belum`
 * **Update Delivery / Payment Status:** `PATCH /api/v1/records/:id/status`
@@ -118,7 +133,7 @@ Once the target quotation is identified, link the client's PO:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Alifanoveliasukma/quotation-po-tracker-api.git
+   git clone https://github.com/alifanovelia05/quotation-po-tracker-api.git
    cd quotation-po-tracker-api
    ```
 2. **Download dependencies:**
@@ -130,3 +145,4 @@ Once the target quotation is identified, link the client's PO:
    go run main.go
    ```
 Server runs locally at `http://localhost:8080`.
+Default admin credentials: `username: admin`, `password: password123`.
