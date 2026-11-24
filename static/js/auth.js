@@ -53,7 +53,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-  ['dashboard', 'records'].forEach(t => {
+  ['dashboard', 'records', 'rekap'].forEach(t => {
     document.getElementById(`view-${t}`)?.classList.add('hidden');
     const nav = document.getElementById(`nav-${t}`);
     if (nav) {
@@ -66,5 +66,9 @@ function switchTab(tab) {
   if (targetNav) {
     targetNav.classList.add('bg-blue-600', 'text-white');
     targetNav.classList.remove('hover:bg-slate-800', 'text-slate-300');
+  }
+
+  if (tab === 'rekap' && typeof updateRekapView === 'function') {
+    updateRekapView();
   }
 }

@@ -27,6 +27,7 @@ type LoginRequest struct {
 type TransactionRecord struct {
 	ID uint `json:"id" gorm:"primaryKey"`
 
+	OfferNumber   string    `json:"offer_number"`
 	OfferDate     time.Time `json:"offer_date"`
 	OfferQty      int       `json:"offer_qty" binding:"required,min=1"`
 	OfferUnit     string    `json:"offer_unit" binding:"required"`
@@ -57,6 +58,7 @@ type TransactionRecord struct {
 }
 
 type CreateOfferRequest struct {
+	OfferNumber   string  `json:"offer_number"`
 	OfferDate     string  `json:"offer_date"`
 	OfferQty      int     `json:"offer_qty" binding:"required,min=1"`
 	OfferUnit     string  `json:"offer_unit" binding:"required"`

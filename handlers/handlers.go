@@ -27,6 +27,7 @@ func CreateOfferRecord(c *gin.Context) {
 	totalOffer := float64(req.OfferQty) * req.OfferPrice
 
 	record := models.TransactionRecord{
+		OfferNumber:   strings.TrimSpace(req.OfferNumber),
 		OfferDate:     offerDate,
 		OfferQty:      req.OfferQty,
 		OfferUnit:     req.OfferUnit,
@@ -343,6 +344,9 @@ func UpdateOfferRecord(c *gin.Context) {
 		rec.OfferDate = offerDate
 	}
 
+	if req.OfferNumber != "" {
+		rec.OfferNumber = strings.TrimSpace(req.OfferNumber)
+	}
 	rec.OfferQty = req.OfferQty
 	rec.OfferUnit = req.OfferUnit
 	rec.OfferItemName = req.OfferItemName

@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B2B Quotation & PO Manager</title>
-  <!-- Tailwind CSS & Lucide Icons & Chart.js -->
+  <title>Argra Teknik Mandiri - B2B Quotation & PO Manager</title>
+  <!-- Tailwind CSS & Lucide Icons & Chart.js & SheetJS (Excel) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
@@ -23,7 +24,8 @@
           <i class="fa-solid fa-file-invoice-dollar text-2xl"></i>
         </div>
         <h2 class="text-2xl font-bold text-slate-800">Login Sistem</h2>
-        <p class="text-sm text-slate-500 mt-1">Quotation & PO Tracker Management</p>
+        <p class="text-sm font-medium text-blue-600 mt-1">Argra Teknik Mandiri</p>
+        <p class="text-xs text-slate-400 mt-0.5">Quotation & PO Tracker Management</p>
       </div>
       <form id="loginForm" class="space-y-4">
         <div>
@@ -54,11 +56,11 @@
         <!-- Logo / Title -->
         <div class="p-6 border-b border-slate-800 flex items-center gap-3">
           <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
-            Q
+            A
           </div>
           <div>
-            <h1 class="font-bold text-white tracking-wide text-base">Quotation & PO</h1>
-            <p class="text-[11px] text-slate-400">Industrial Manufacturing</p>
+            <h1 class="font-bold text-white tracking-wide text-sm leading-tight">Argra Teknik Mandiri</h1>
+            <p class="text-[10px] text-slate-400 mt-0.5">Quotation & PO Tracker</p>
           </div>
         </div>
 
@@ -73,6 +75,11 @@
             class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-table-list w-5"></i>
             <span>Penawaran & PO</span>
+          </button>
+          <button onclick="switchTab('rekap')" id="nav-rekap"
+            class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-file-excel w-5 text-emerald-400"></i>
+            <span>Rekap 6 Bulan & Export</span>
           </button>
         </nav>
       </div>
@@ -338,7 +345,14 @@
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200/80 sticky top-0 z-10">
                 <tr>
-                  <th class="p-3.5">Tgl Penawaran</th>
+                  <th class="p-3.5 whitespace-nowrap cursor-pointer hover:bg-slate-100 select-none transition" onclick="toggleDateSort()" title="Klik untuk mengurutkan terbaru / terlama">
+                    <div class="flex items-center gap-1.5 text-slate-700">
+                      <span>Tgl Penawaran</span>
+                      <i id="dateSortIcon" class="fa-solid fa-arrow-down-wide-short text-blue-600 text-xs"></i>
+                      <span id="dateSortLabel" class="text-[9px] font-normal text-slate-400 bg-slate-200/60 px-1.5 py-0.5 rounded">Terbaru</span>
+                    </div>
+                  </th>
+                  <th class="p-3.5 font-mono whitespace-nowrap">No Penawaran</th>
                   <th class="p-3.5">Nama Barang & Bahan</th>
                   <th class="p-3.5">Klien / PIC</th>
                   <th class="p-3.5">Qty</th>
@@ -350,6 +364,138 @@
               </thead>
               <tbody id="recordsTableBody" class="divide-y divide-slate-100">
                 <!-- Data populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Footer Bar -->
+          <div class="p-3.5 bg-slate-50 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 text-slate-500">
+              <span>Tampilkan:</span>
+              <select id="recordsPerPageSelect" onchange="changePageSize(this.value)"
+                class="px-2 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="10" selected>10 baris</option>
+                <option value="25">25 baris</option>
+                <option value="50">50 baris</option>
+                <option value="100">100 baris</option>
+              </select>
+              <span id="paginationInfo" class="text-slate-400">Menampilkan 0 - 0 dari 0 data</span>
+            </div>
+
+            <!-- Page Buttons -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="prevPage()" id="btnPrevPage"
+                class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 flex items-center gap-1 transition">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                <span>Sebelumnya</span>
+              </button>
+              
+              <div id="paginationNumbers" class="flex items-center gap-1">
+                <!-- Dynamic Page Number Buttons -->
+              </div>
+
+              <button onclick="nextPage()" id="btnNextPage"
+                class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 flex items-center gap-1 transition">
+                <span>Berikutnya</span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: REKAP DATA PER 6 BULAN (EXCEL) ==================== -->
+      <section id="view-rekap" class="hidden space-y-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Rekap Data & Export Excel</h2>
+            <p class="text-xs text-slate-500">Rekapitulasi berkala per 6 bulan (Semester) untuk seluruh data penawaran dan realisasi PO</p>
+          </div>
+          <button onclick="downloadRekapExcel()"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-emerald-500/20 text-xs flex items-center gap-2 self-start transition">
+            <i class="fa-solid fa-file-excel text-sm"></i>
+            <span>Download File Excel (.xlsx)</span>
+          </button>
+        </div>
+
+        <!-- Rekap Control Card (Pilihan Semester 6 Bulan Sederhana) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-500">Pilih Periode 6 Bulan (Semester)</label>
+              <div class="flex items-center gap-2 mt-1">
+                <select id="rekapPeriodSelect" onchange="updateRekapView()"
+                  class="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                  <option value="all">Semua Data (Keseluruhan Riwayat)</option>
+                  <option value="2026-s2" selected>Tahun 2026 - Semester 2 (Juli - Desember)</option>
+                  <option value="2026-s1">Tahun 2026 - Semester 1 (Januari - Juni)</option>
+                  <option value="2025-s2">Tahun 2025 - Semester 2 (Juli - Desember)</option>
+                  <option value="2025-s1">Tahun 2025 - Semester 1 (Januari - Juni)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 w-full md:w-auto text-xs text-slate-500 bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-200/80">
+            <i class="fa-solid fa-circle-info text-blue-500"></i>
+            <span>Data dimasukkan apa adanya: baik yang <b>Sudah PO</b> maupun yang <b>Belum PO</b> tetap terangkum lengkap.</span>
+          </div>
+        </div>
+
+        <!-- Rangkuman Angka Cepat -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-semibold uppercase text-slate-400 block mb-1">Total Penawaran</span>
+            <div class="flex items-baseline gap-2">
+              <span id="rekapStatTotal" class="text-xl font-bold text-slate-800">0</span>
+              <span class="text-xs text-slate-400">item</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-semibold uppercase text-emerald-600 block mb-1">Tembus Jadi PO (Deal)</span>
+            <div class="flex items-baseline gap-2">
+              <span id="rekapStatDeal" class="text-xl font-bold text-emerald-700">0</span>
+              <span class="text-xs text-slate-400">item</span>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-semibold uppercase text-blue-600 block mb-1">Nilai Penawaran Diajukan</span>
+            <div id="rekapStatNominalOffer" class="text-sm font-bold text-slate-800 truncate">Rp 0</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-semibold uppercase text-emerald-600 block mb-1">Realisasi Nilai PO Deal</span>
+            <div id="rekapStatNominalDeal" class="text-sm font-bold text-emerald-700 truncate">Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Preview Tabel Rekap -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div class="p-3.5 bg-slate-50 border-b border-slate-200/80 flex justify-between items-center text-xs">
+            <span class="font-bold text-slate-700">Pratinjau Data yang Akan Masuk ke Excel:</span>
+            <span id="rekapRowCount" class="text-slate-500 font-medium">0 baris data</span>
+          </div>
+          <div class="overflow-x-auto max-h-[500px]">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/70 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200 sticky top-0 z-10">
+                <tr>
+                  <th class="p-3">No</th>
+                  <th class="p-3">Tgl Penawaran</th>
+                  <th class="p-3 font-mono">No Penawaran</th>
+                  <th class="p-3">Klien / PIC</th>
+                  <th class="p-3">Nama Barang / Pekerjaan</th>
+                  <th class="p-3">Qty</th>
+                  <th class="p-3">Harga Penawaran</th>
+                  <th class="p-3 text-center">Status PO</th>
+                  <th class="p-3">No PO Klien</th>
+                  <th class="p-3">Tgl PO Deal</th>
+                  <th class="p-3">Harga PO Deal</th>
+                </tr>
+              </thead>
+              <tbody id="rekapTableBody" class="divide-y divide-slate-100">
+                <!-- Populated via JS -->
               </tbody>
             </table>
           </div>
@@ -368,9 +514,15 @@
       </div>
       <form id="createOfferForm" onsubmit="submitOfferForm(event)" class="space-y-3 text-xs">
         <input type="hidden" id="editOfferID">
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">Tanggal Penawaran</label>
-          <input type="date" id="formOfferDate" required class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Nomor Surat Penawaran</label>
+            <input type="text" id="formOfferNumber" placeholder="Contoh: 4125 /ATM/ 21 / XI /2026" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-[11px]">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Tanggal Penawaran</label>
+            <input type="date" id="formOfferDate" required class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -490,6 +642,10 @@
             <i class="fa-solid fa-paper-plane text-[10px]"></i> DATA SURAT PENAWARAN
           </h4>
           <div>
+            <span class="text-slate-400 block text-[10px]">Nomor Surat Penawaran:</span>
+            <span id="detOfferNumber" class="font-mono font-bold text-blue-700 text-xs"></span>
+          </div>
+          <div>
             <span class="text-slate-400 block text-[10px]">Nama Barang / Pekerjaan:</span>
             <span id="detOfferItemName" class="font-semibold text-slate-800 text-xs"></span>
           </div>
@@ -575,5 +731,6 @@
   <script src="/static/js/auth.js"></script>
   <script src="/static/js/records.js"></script>
   <script src="/static/js/smartmatch.js"></script>
+  <script src="/static/js/rekap.js"></script>
 </body>
 </html>

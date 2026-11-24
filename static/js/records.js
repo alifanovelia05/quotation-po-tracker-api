@@ -1,5 +1,60 @@
 let allRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
+let pageSize = 10;
 let donutChartInstance = null;
+let dateSortOrder = 'desc'; // 'desc' = terbaru duluan, 'asc' = terlama duluan
+
+function changePageSize(size) {
+  pageSize = parseInt(size, 10) || 10;
+  currentPage = 1;
+  renderTableWithPagination();
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTableWithPagination();
+  }
+}
+
+function nextPage() {
+  const maxPage = Math.ceil(filteredRecords.length / pageSize) || 1;
+  if (currentPage < maxPage) {
+    currentPage++;
+    renderTableWithPagination();
+  }
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderTableWithPagination();
+}
+
+function toggleDateSort() {
+  dateSortOrder = dateSortOrder === 'desc' ? 'asc' : 'desc';
+  const icon = document.getElementById('dateSortIcon');
+  const label = document.getElementById('dateSortLabel');
+
+  if (icon) {
+    if (dateSortOrder === 'desc') {
+      icon.className = 'fa-solid fa-arrow-down-wide-short text-blue-600';
+      if (label) label.innerText = 'Terbaru';
+    } else {
+      icon.className = 'fa-solid fa-arrow-up-short-wide text-blue-600';
+      if (label) label.innerText = 'Terlama';
+    }
+  }
+
+  // Lakukan pengurutan pada allRecords
+  allRecords.sort((a, b) => {
+    const timeA = new Date(a.offer_date || 0).getTime();
+    const timeB = new Date(b.offer_date || 0).getTime();
+    return dateSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+  });
+
+  filterTable(); // Render ulang tabel sesuai hasil sort dan filter teks
+}
 
 async function loadRecords() {
   const poStatusEl = document.getElementById('filterPOStatus');
@@ -18,7 +73,14 @@ async function loadRecords() {
     if (res.status === 401) return logout();
     const json = await res.json();
     allRecords = json.data || [];
-    renderTable(allRecords);
+    allRecords.sort((a, b) => {
+      const timeA = new Date(a.offer_date || 0).getTime();
+      const timeB = new Date(b.offer_date || 0).getTime();
+      return dateSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+    filteredRecords = [...allRecords];
+    currentPage = 1;
+    renderTableWithPagination();
     updateStatistics(allRecords);
   } catch (err) {
     console.error(err);
@@ -45,6 +107,7 @@ function renderTable(records) {
     tr.className = "hover:bg-slate-50/80 transition-colors";
     tr.innerHTML = `
       <td class="p-3.5 text-slate-500 whitespace-nowrap">${r.offer_date ? r.offer_date.split('T')[0] : '-'}</td>
+      <td class="p-3.5 whitespace-nowrap font-mono text-[11px] font-bold text-blue-700">${r.offer_number || '-'}</td>
       <td class="p-3.5">
         <div class="font-semibold text-slate-800">${r.offer_item_name}</div>
         <div class="text-[10px] text-slate-400 line-clamp-1">${r.materials || '-'}</div>
@@ -102,9 +165,62 @@ function renderTable(records) {
   });
 }
 
+function renderTableWithPagination() {
+  const total = filteredRecords.length;
+  const maxPage = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > maxPage) currentPage = maxPage;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageRecords = filteredRecords.slice(startIndex, endIndex);
+
+  renderTable(pageRecords);
+
+  // Update Pagination Info
+  const infoEl = document.getElementById('paginationInfo');
+  if (infoEl) {
+    if (total === 0) {
+      infoEl.innerText = 'Menampilkan 0 dari 0 data';
+    } else {
+      infoEl.innerText = `Menampilkan ${startIndex + 1} - ${endIndex} dari ${total} data`;
+    }
+  }
+
+  // Update Buttons State
+  const btnPrev = document.getElementById('btnPrevPage');
+  const btnNext = document.getElementById('btnNextPage');
+  if (btnPrev) btnPrev.disabled = currentPage <= 1;
+  if (btnNext) btnNext.disabled = currentPage >= maxPage;
+
+  // Render Page Numbers
+  const numContainer = document.getElementById('paginationNumbers');
+  if (numContainer) {
+    numContainer.innerHTML = '';
+    for (let p = 1; p <= maxPage; p++) {
+      if (maxPage > 7 && Math.abs(p - currentPage) > 2 && p !== 1 && p !== maxPage) {
+        if (p === 2 || p === maxPage - 1) {
+          const dots = document.createElement('span');
+          dots.className = "px-1 text-slate-400";
+          dots.innerText = '...';
+          numContainer.appendChild(dots);
+        }
+        continue;
+      }
+      const btn = document.createElement('button');
+      btn.onclick = () => goToPage(p);
+      btn.innerText = p;
+      btn.className = p === currentPage
+        ? "w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-sm"
+        : "w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium";
+      numContainer.appendChild(btn);
+    }
+  }
+}
+
 function filterTable() {
   const q = document.getElementById('tableSearchInput').value.toLowerCase();
-  const filtered = allRecords.filter(r => 
+  filteredRecords = allRecords.filter(r => 
+    (r.offer_number && r.offer_number.toLowerCase().includes(q)) ||
     (r.offer_item_name && r.offer_item_name.toLowerCase().includes(q)) ||
     (r.materials && r.materials.toLowerCase().includes(q)) ||
     (r.client_company && r.client_company.toLowerCase().includes(q)) ||
@@ -112,7 +228,8 @@ function filterTable() {
     (r.po_number && r.po_number.toLowerCase().includes(q)) ||
     (r.po_item_name && r.po_item_name.toLowerCase().includes(q))
   );
-  renderTable(filtered);
+  currentPage = 1;
+  renderTableWithPagination();
 }
 
 function updateStatistics(records) {
@@ -179,6 +296,7 @@ function openDetailModal(id) {
     ? `<span class="badge bg-emerald-100 text-emerald-700">SUDAH PO</span>` 
     : `<span class="badge bg-amber-100 text-amber-700">BELUM PO</span>`;
 
+  document.getElementById('detOfferNumber').innerText = r.offer_number || '-';
   document.getElementById('detOfferItemName').innerText = r.offer_item_name || '-';
   document.getElementById('detMaterials').innerText = r.materials || 'Tidak ada catatan spesifikasi bahan.';
   document.getElementById('detClientPIC').innerText = `${r.client_company} (PIC: ${r.client_pic || '-'})`;
@@ -226,6 +344,7 @@ function openEditOfferModal(id) {
 
   document.getElementById('editOfferID').value = r.id;
   document.getElementById('offerModalTitle').innerText = 'Edit Data Penawaran';
+  document.getElementById('formOfferNumber').value = r.offer_number || '';
   document.getElementById('formOfferDate').value = r.offer_date ? r.offer_date.split('T')[0] : '';
   document.getElementById('formClientCompany').value = r.client_company || '';
   document.getElementById('formClientPIC').value = r.client_pic || '';
@@ -253,6 +372,7 @@ async function submitOfferForm(e) {
   e.preventDefault();
   const editID = document.getElementById('editOfferID').value;
   const payload = {
+    offer_number: document.getElementById('formOfferNumber').value,
     offer_date: document.getElementById('formOfferDate').value,
     client_company: document.getElementById('formClientCompany').value,
     client_pic: document.getElementById('formClientPIC').value,
@@ -324,6 +444,7 @@ async function deletePOOnly(id) {
 function openAttachModal(id, itemName, qty, unit, price) {
   document.getElementById('attachTargetID').value = id;
   document.getElementById('attachOfferTargetText').innerText = `Penawaran: ${itemName} (${qty} ${unit})`;
+  document.getElementById('attachPONumber').value = '';
   document.getElementById('attachPOItemName').value = itemName;
   document.getElementById('attachPOQty').value = qty;
   document.getElementById('attachPOUnit').value = unit;
