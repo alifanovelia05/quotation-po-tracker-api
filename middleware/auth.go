@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -9,7 +10,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JWTSecret = []byte("kunci-rahasia-argra-tehnik-mandiri-2026")
+func getJWTSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "argra-default-dev-secret-change-in-production"
+	}
+	return []byte(secret)
+}
 
 type Claims struct {
 	UserID   uint   `json:"user_id"`
@@ -31,7 +38,7 @@ func GenerateToken(userID uint, username, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(JWTSecret)
+	return token.SignedString(getJWTSecret())
 }
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -58,7 +65,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		claims := &Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return JWTSecret, nil
+			return getJWTSecret(), nil
 		})
 
 		if err != nil || !token.Valid {
