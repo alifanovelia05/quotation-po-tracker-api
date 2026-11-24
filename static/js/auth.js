@@ -72,3 +72,24 @@ function switchTab(tab) {
     updateRekapView();
   }
 }
+
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebarNav');
+  const backdrop = document.getElementById('mobileMenuBackdrop');
+  if (!sidebar) return;
+  const isHidden = sidebar.classList.contains('-translate-x-full');
+  if (isHidden) {
+    sidebar.classList.remove('-translate-x-full');
+    backdrop?.classList.remove('hidden');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    backdrop?.classList.add('hidden');
+  }
+}
+
+function closeMobileMenu() {
+  const sidebar = document.getElementById('sidebarNav');
+  const backdrop = document.getElementById('mobileMenuBackdrop');
+  sidebar?.classList.add('-translate-x-full');
+  backdrop?.classList.add('hidden');
+}

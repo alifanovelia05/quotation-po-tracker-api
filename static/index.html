@@ -52,35 +52,61 @@
   </div>
 
   <!-- ==================== MAIN LAYOUT ==================== -->
-  <div class="flex h-screen overflow-hidden">
+  <div class="flex flex-col md:flex-row h-screen overflow-hidden">
 
-    <!-- 1. SIDEBAR -->
-    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shadow-xl flex-shrink-0">
+    <!-- Mobile Top Navigation Bar -->
+    <header class="md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-md z-30 flex-shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm shadow">
+          A
+        </div>
+        <div>
+          <h1 class="font-bold text-xs tracking-wide">Argra Teknik Mandiri</h1>
+          <p class="text-[9px] text-slate-400">Quotation & PO Tracker</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 transition">
+          <i id="mobileMenuIcon" class="fa-solid fa-bars text-base"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Backdrop -->
+    <div id="mobileMenuBackdrop" onclick="toggleMobileMenu()" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-30 md:hidden"></div>
+
+    <!-- 1. SIDEBAR (Responsive drawer on mobile, static on desktop) -->
+    <aside id="sidebarNav" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shadow-xl flex-shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
       <div>
         <!-- Logo / Title -->
-        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
-          <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
-            A
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
+              A
+            </div>
+            <div>
+              <h1 class="font-bold text-white tracking-wide text-sm leading-tight">Argra Teknik Mandiri</h1>
+              <p class="text-[10px] text-slate-400 mt-0.5">Quotation & PO Tracker</p>
+            </div>
           </div>
-          <div>
-            <h1 class="font-bold text-white tracking-wide text-sm leading-tight">Argra Teknik Mandiri</h1>
-            <p class="text-[10px] text-slate-400 mt-0.5">Quotation & PO Tracker</p>
-          </div>
+          <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400 hover:text-white p-1">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
         </div>
 
         <!-- Navigation Menus -->
         <nav class="p-4 space-y-1.5">
-          <button onclick="switchTab('dashboard')" id="nav-dashboard"
+          <button onclick="switchTab('dashboard'); closeMobileMenu();" id="nav-dashboard"
             class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors bg-blue-600 text-white">
             <i class="fa-solid fa-chart-pie w-5"></i>
             <span>Dashboard & Statistik</span>
           </button>
-          <button onclick="switchTab('records')" id="nav-records"
+          <button onclick="switchTab('records'); closeMobileMenu();" id="nav-records"
             class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-table-list w-5"></i>
             <span>Penawaran & PO</span>
           </button>
-          <button onclick="switchTab('rekap')" id="nav-rekap"
+          <button onclick="switchTab('rekap'); closeMobileMenu();" id="nav-rekap"
             class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-file-excel w-5 text-emerald-400"></i>
             <span>Rekap 6 Bulan & Export</span>
@@ -108,7 +134,7 @@
     </aside>
 
     <!-- 2. MAIN CONTENT AREA -->
-    <main class="flex-1 overflow-y-auto bg-slate-50 p-8">
+    <main class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-8">
 
       <!-- ==================== VIEW 1: DASHBOARD & STATISTIK ==================== -->
       <section id="view-dashboard" class="space-y-6">
@@ -518,7 +544,7 @@
       </div>
       <form id="createOfferForm" onsubmit="submitOfferForm(event)" class="space-y-3 text-xs">
         <input type="hidden" id="editOfferID">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-slate-600 mb-1">Nomor Surat Penawaran</label>
             <input type="text" id="formOfferNumber" placeholder="Contoh: 4125 /ATM/ 21 / XI /2026" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-[11px]">
@@ -528,7 +554,7 @@
             <input type="date" id="formOfferDate" required class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-slate-600 mb-1">Perusahaan Klien</label>
             <input type="text" id="formClientCompany" required placeholder="aio, formosa..." class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
@@ -546,7 +572,7 @@
           <label class="block font-semibold text-slate-600 mb-1">Rincian Spesifikasi / Material (Opsional)</label>
           <textarea id="formMaterials" rows="2" placeholder="Plate SUS 304 tebal 1.5mm, Baut L M8, Welder..." class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-semibold text-slate-600 mb-1">Qty</label>
             <input type="number" id="formOfferQty" required min="1" value="1" oninput="calcTotalOffer()" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
@@ -595,7 +621,7 @@
           <label class="block font-semibold text-slate-600 mb-1">Nama PO (Sesuai Deskripsi di Surat PO)</label>
           <input type="text" id="attachPOItemName" required placeholder="Contoh: Additional Perbaikan lifter SGH..." class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-slate-600 mb-1">Tanggal PO Turun</label>
             <input type="date" id="attachPODate" required class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
@@ -605,7 +631,7 @@
             <input type="number" id="attachPOPrice" required class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-slate-600 mb-1">Qty PO</label>
             <input type="number" id="attachPOQty" required min="1" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
