@@ -51,8 +51,8 @@ This REST API provides an automated backend service with a **Heuristic Multi-Fac
   * Body: `{"username":"staff1", "password":"password123", "full_name":"Operations Staff", "role":"staff"}`
 * **User Login:**
   * `POST /api/v1/auth/login`
-  * Body: `{"username":"admin", "password":"password123"}`
-  * Response returns a signed Bearer JWT token valid for 24 hours.
+  * Body: `{"username":"demo", "password":"demo123"}`
+  * Default demo account for testing: `username: demo`, `password: demo123`. Custom administrator accounts can be configured dynamically via `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables.
 
 ---
 

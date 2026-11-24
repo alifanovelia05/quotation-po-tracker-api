@@ -2,6 +2,7 @@ package database
 
 import (
 	"log"
+	"os"
 	"project1/models"
 	"time"
 
@@ -35,17 +36,52 @@ func InitDB() {
 }
 
 func seedInitialData() {
-	var userCount int64
-	DB.Model(&models.User{}).Count(&userCount)
-	if userCount == 0 {
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-		defaultAdmin := models.User{
-			Username: "admin",
-			Password: string(hashedPassword),
-			FullName: "Administrator Kantor",
-			Role:     "admin",
+	// 1. Akun Demo Publik (Untuk Pengunjung LinkedIn / Uji Coba)
+	var demoUser models.User
+	if err := DB.Where("username = ?", "demo").First(&demoUser).Error; err != nil {
+		hashDemo, _ := bcrypt.GenerateFromPassword([]byte("demo123"), bcrypt.DefaultCost)
+		demoAccount := models.User{
+			Username: "demo",
+			Password: string(hashDemo),
+			FullName: "Demo Visitor",
+			Role:     "demo",
 		}
-		DB.Create(&defaultAdmin)
+		DB.Create(&demoAccount)
+	}
+
+	// 2. Akun Admin Pribadi (Diambil dari Environment Variables Render/.env)
+	adminUser := os.Getenv("ADMIN_USERNAME")
+	adminPass := os.Getenv("ADMIN_PASSWORD")
+	if adminUser != "" && adminPass != "" {
+		var existingAdmin models.User
+		if err := DB.Where("username = ?", adminUser).First(&existingAdmin).Error; err != nil {
+			hashAdmin, _ := bcrypt.GenerateFromPassword([]byte(adminPass), bcrypt.DefaultCost)
+			customAdmin := models.User{
+				Username: adminUser,
+				Password: string(hashAdmin),
+				FullName: "Administrator Argra",
+				Role:     "admin",
+			}
+			DB.Create(&customAdmin)
+		} else {
+			// Update password jika ENV diubah
+			hashAdmin, _ := bcrypt.GenerateFromPassword([]byte(adminPass), bcrypt.DefaultCost)
+			existingAdmin.Password = string(hashAdmin)
+			DB.Save(&existingAdmin)
+		}
+	} else {
+		// Fallback admin default jika ENV belum diisi
+		var adminUserDefault models.User
+		if err := DB.Where("username = ?", "admin").First(&adminUserDefault).Error; err != nil {
+			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+			defaultAdmin := models.User{
+				Username: "admin",
+				Password: string(hashedPassword),
+				FullName: "Administrator Kantor",
+				Role:     "admin",
+			}
+			DB.Create(&defaultAdmin)
+		}
 	}
 
 	var recordCount int64
