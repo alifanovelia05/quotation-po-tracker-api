@@ -36,7 +36,6 @@ func InitDB() {
 }
 
 func seedInitialData() {
-	// 1. Akun Demo Publik (Untuk Pengunjung LinkedIn / Uji Coba)
 	var demoUser models.User
 	if err := DB.Where("username = ?", "demo").First(&demoUser).Error; err != nil {
 		hashDemo, _ := bcrypt.GenerateFromPassword([]byte("demo123"), bcrypt.DefaultCost)
@@ -49,7 +48,6 @@ func seedInitialData() {
 		DB.Create(&demoAccount)
 	}
 
-	// 2. Akun Admin Pribadi (Diambil dari Environment Variables Render/.env)
 	adminUser := os.Getenv("ADMIN_USERNAME")
 	adminPass := os.Getenv("ADMIN_PASSWORD")
 	if adminUser != "" && adminPass != "" {
@@ -64,13 +62,11 @@ func seedInitialData() {
 			}
 			DB.Create(&customAdmin)
 		} else {
-			// Update password jika ENV diubah
 			hashAdmin, _ := bcrypt.GenerateFromPassword([]byte(adminPass), bcrypt.DefaultCost)
 			existingAdmin.Password = string(hashAdmin)
 			DB.Save(&existingAdmin)
 		}
 	} else {
-		// Fallback admin default jika ENV belum diisi
 		var adminUserDefault models.User
 		if err := DB.Where("username = ?", "admin").First(&adminUserDefault).Error; err != nil {
 			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)

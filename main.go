@@ -16,11 +16,9 @@ func main() {
 
 	r := gin.Default()
 
-	// 1. Sajikan Frontend Web Dashboard dari folder static
 	r.StaticFile("/", "./static/index.html")
 	r.Static("/static", "./static")
 
-	// 2. Routing API v1
 	v1 := r.Group("/api/v1")
 	{
 		auth := v1.Group("/auth")
