@@ -33,8 +33,11 @@ func main() {
 		{
 			protected.POST("/records", handlers.CreateOfferRecord)
 			protected.GET("/records", handlers.GetRecords)
+			protected.PUT("/records/:id", handlers.UpdateOfferRecord)
+			protected.DELETE("/records/:id", handlers.DeleteRecord)
 			protected.GET("/records/smart-match", handlers.SmartMatchRecord)
 			protected.PATCH("/records/:id/attach-po", handlers.AttachPOToRecord)
+			protected.DELETE("/records/:id/po", handlers.DeletePORecord)
 			protected.PATCH("/records/:id/status", handlers.UpdateOperationalStatus)
 		}
 	}

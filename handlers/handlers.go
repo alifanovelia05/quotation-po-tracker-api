@@ -323,3 +323,89 @@ func UpdateOperationalStatus(c *gin.Context) {
 		"data":    rec,
 	})
 }
+
+func UpdateOfferRecord(c *gin.Context) {
+	id := c.Param("id")
+	var req models.CreateOfferRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var rec models.TransactionRecord
+	if err := database.DB.First(&rec, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Data penawaran tidak ditemukan"})
+		return
+	}
+
+	offerDate, err := time.Parse("2006-01-02", req.OfferDate)
+	if err == nil {
+		rec.OfferDate = offerDate
+	}
+
+	rec.OfferQty = req.OfferQty
+	rec.OfferUnit = req.OfferUnit
+	rec.OfferItemName = req.OfferItemName
+	rec.Materials = req.Materials
+	rec.ClientCompany = strings.ToLower(strings.TrimSpace(req.ClientCompany))
+	rec.ClientPIC = strings.ToLower(strings.TrimSpace(req.ClientPIC))
+	rec.OfferPrice = req.OfferPrice
+	rec.OfferTotal = float64(req.OfferQty) * req.OfferPrice
+	rec.Notes = req.Notes
+
+	if rec.POPrice != nil {
+		diffUnit := rec.OfferPrice - *rec.POPrice
+		diffTotal := rec.OfferTotal - *rec.POTotal
+		rec.UnitPriceDiff = &diffUnit
+		rec.TotalPriceDiff = &diffTotal
+	}
+
+	if err := database.DB.Save(&rec).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupdate penawaran"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Data penawaran berhasil diperbarui",
+		"data":    rec,
+	})
+}
+
+func DeleteRecord(c *gin.Context) {
+	id := c.Param("id")
+	if err := database.DB.Delete(&models.TransactionRecord{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Data transaksi berhasil dihapus",
+	})
+}
+
+func DeletePORecord(c *gin.Context) {
+	id := c.Param("id")
+	var rec models.TransactionRecord
+	if err := database.DB.First(&rec, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Data tidak ditemukan"})
+		return
+	}
+
+	rec.PODate = nil
+	rec.POQty = nil
+	rec.POUnit = nil
+	rec.POStatus = "belum"
+	rec.PONumber = nil
+	rec.POItemName = nil
+	rec.POPrice = nil
+	rec.POTotal = nil
+	rec.UnitPriceDiff = nil
+	rec.TotalPriceDiff = nil
+
+	database.DB.Save(&rec)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Data PO berhasil dihapus, status penawaran kembali ke Belum PO",
+		"data":    rec,
+	})
+}
