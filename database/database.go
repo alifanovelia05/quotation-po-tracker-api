@@ -27,6 +27,7 @@ func InitDB() {
 		&models.User{},
 		&models.TransactionRecord{},
 		&models.ActivityLog{},
+		&models.Company{},
 	)
 	if err != nil {
 		log.Fatalf("Gagal migrasi database: %v", err)

@@ -12,6 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
   } else {
     document.getElementById('loginModal')?.classList.add('hidden');
     if (typeof loadRecords === 'function') loadRecords();
+    if (typeof loadCompanies === 'function') loadCompanies();
   }
 });
 
@@ -37,6 +38,7 @@ if (loginForm) {
         if (roleEl) roleEl.innerText = data.user.role;
         document.getElementById('loginModal')?.classList.add('hidden');
         if (typeof loadRecords === 'function') loadRecords();
+        if (typeof loadCompanies === 'function') loadCompanies();
       } else {
         alert('Login gagal: ' + (data.error || 'Password salah'));
       }
@@ -53,7 +55,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-  ['dashboard', 'records', 'rekap'].forEach(t => {
+  ['dashboard', 'records', 'companies', 'rekap'].forEach(t => {
     document.getElementById(`view-${t}`)?.classList.add('hidden');
     const nav = document.getElementById(`nav-${t}`);
     if (nav) {
@@ -68,6 +70,9 @@ function switchTab(tab) {
     targetNav.classList.remove('hover:bg-slate-800', 'text-slate-300');
   }
 
+  if (tab === 'companies' && typeof loadCompanies === 'function') {
+    loadCompanies();
+  }
   if (tab === 'rekap' && typeof updateRekapView === 'function') {
     updateRekapView();
   }

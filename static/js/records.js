@@ -114,21 +114,21 @@ function renderTable(records) {
     const tr = document.createElement('tr');
     tr.className = "hover:bg-slate-50/80 transition-colors divide-x divide-slate-200/70";
     tr.innerHTML = `
-      <td class="py-3 px-3 text-slate-500 whitespace-nowrap text-xs">${r.offer_date ? r.offer_date.split('T')[0] : '-'}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-blue-700">${r.offer_number || '-'}</td>
-      <td class="py-3 px-4 min-w-[220px]">
+      <td class="py-4 px-3 text-slate-500 whitespace-nowrap text-xs text-center align-middle">${r.offer_date ? r.offer_date.split('T')[0] : '-'}</td>
+      <td class="py-4 px-3 whitespace-nowrap text-xs font-semibold text-blue-700 text-center align-middle">${r.offer_number || '-'}</td>
+      <td class="py-4 px-4 min-w-[220px] text-center align-middle">
         <div class="font-semibold text-slate-800 text-xs">${r.offer_item_name}</div>
         <div class="text-[10px] text-slate-400 line-clamp-1">${r.materials || '-'}</div>
       </td>
-      <td class="py-3 px-3 whitespace-nowrap">
+      <td class="py-4 px-3 whitespace-nowrap text-center align-middle">
         <span class="font-bold uppercase text-slate-700 text-xs block">${r.client_company}</span>
-        <span class="text-slate-400 text-[11px] block" title="${r.client_pic || '-'}">${picDisplay}</span>
+        <span class="text-slate-400 text-[11px] block truncate max-w-[90px] mx-auto" title="${r.client_pic || '-'}">${picDisplay}</span>
       </td>
-      <td class="py-3 px-3 whitespace-nowrap text-xs font-medium text-slate-700">${r.offer_qty} ${r.offer_unit}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-slate-800">Rp ${Number(r.offer_price).toLocaleString('id-ID')}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-center">${poBadge}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-slate-800">${r.po_number || '-'}</td>
-      <td class="py-3 px-3 whitespace-nowrap text-center">
+      <td class="py-4 px-3 whitespace-nowrap text-xs font-medium text-slate-700 text-center align-middle">${r.offer_qty} ${r.offer_unit}</td>
+      <td class="py-4 px-3 whitespace-nowrap text-xs font-semibold text-slate-800 text-center align-middle">Rp ${Number(r.offer_total || (r.offer_price * r.offer_qty)).toLocaleString('id-ID')}</td>
+      <td class="py-4 px-3 whitespace-nowrap text-center align-middle">${poBadge}</td>
+      <td class="py-4 px-3 whitespace-nowrap text-xs font-semibold text-slate-800 text-center align-middle">${r.po_number || '-'}</td>
+      <td class="py-4 px-3 whitespace-nowrap text-center align-middle">
         <div class="flex flex-col gap-1.5 min-w-[130px] max-w-[160px] mx-auto text-left">
           <button onclick="openDetailModal(${r.id})"
             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-medium transition shadow-sm">
@@ -319,8 +319,8 @@ function openDetailModal(id) {
   document.getElementById('detPOQty').innerText = r.po_qty ? `${r.po_qty} ${r.po_unit || ''}` : '-';
   document.getElementById('detPOPrice').innerText = r.po_price ? 'Rp ' + Number(r.po_price).toLocaleString('id-ID') : '-';
   document.getElementById('detPOTotal').innerText = r.po_total ? 'Rp ' + Number(r.po_total).toLocaleString('id-ID') : '-';
-  document.getElementById('detPOVAT').innerText = r.po_vat ? 'Rp ' + Number(r.po_vat).toLocaleString('id-ID') : 'Rp 0';
-  document.getElementById('detPOGrandTotal').innerText = r.po_grand_total ? 'Rp ' + Number(r.po_grand_total).toLocaleString('id-ID') : (r.po_total ? 'Rp ' + Number(r.po_total).toLocaleString('id-ID') : '-');
+  document.getElementById('detPOVAT').innerText = (isDeal && r.po_vat) ? 'Rp ' + Number(r.po_vat).toLocaleString('id-ID') : '-';
+  document.getElementById('detPOGrandTotal').innerText = (isDeal && r.po_grand_total) ? 'Rp ' + Number(r.po_grand_total).toLocaleString('id-ID') : ((isDeal && r.po_total) ? 'Rp ' + Number(r.po_total).toLocaleString('id-ID') : '-');
 
   const diffUnit = Number(r.unit_price_diff) || 0;
   const diffTotal = Number(r.total_price_diff) || 0;
@@ -339,12 +339,100 @@ function closeDetailModal() {
   document.getElementById('detailModal').classList.add('hidden');
 }
 
+function addOfferItemCard(itemData = null, isEditMode = false) {
+  const container = document.getElementById('offerItemsContainer');
+  if (!container) return;
+
+  const card = document.createElement('div');
+  card.className = 'offer-item-card p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-sm';
+  card.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span class="offer-item-label text-[11px] font-bold text-slate-600 uppercase tracking-wider">ITEM #1</span>
+      <button type="button" onclick="removeOfferItemCard(this)"
+        class="btn-remove-offer-item hidden text-[11px] text-red-500 hover:text-red-700 font-semibold flex items-center gap-1 transition">
+        <i class="fa-solid fa-trash-can text-[10px]"></i> Hapus
+      </button>
+    </div>
+    <div>
+      <label class="block font-semibold text-slate-600 mb-1">Nama Barang / Judul Penawaran</label>
+      <input type="text" class="offer-item-name w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required
+        placeholder="Contoh: Repair Tutup Chamber SUS 304...">
+    </div>
+    <div>
+      <label class="block font-semibold text-slate-600 mb-1">Rincian Spesifikasi / Material (Opsional)</label>
+      <textarea rows="2" class="offer-item-materials w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+        placeholder="Plate SUS 304 tebal 1.5mm, Baut L M8, Welder..."></textarea>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block font-semibold text-slate-600 mb-1">Qty</label>
+        <input type="number" class="offer-item-qty w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required min="1" value="1" oninput="calcTotalOffer()">
+      </div>
+      <div>
+        <label class="block font-semibold text-slate-600 mb-1">Satuan</label>
+        <input type="text" class="offer-item-unit w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required placeholder="unit / pcs / lot" value="unit">
+      </div>
+      <div>
+        <label class="block font-semibold text-slate-600 mb-1">Harga Satuan (Rp)</label>
+        <input type="number" class="offer-item-price w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required min="0" oninput="calcTotalOffer()">
+      </div>
+    </div>
+    <div class="text-right text-[11px] text-slate-500 pt-1">
+      Subtotal Item: <span class="offer-item-subtotal font-bold text-slate-800">Rp 0</span>
+    </div>
+  `;
+
+  if (itemData) {
+    card.querySelector('.offer-item-name').value = itemData.offer_item_name || '';
+    card.querySelector('.offer-item-materials').value = itemData.materials || '';
+    card.querySelector('.offer-item-qty').value = itemData.offer_qty || 1;
+    card.querySelector('.offer-item-unit').value = itemData.offer_unit || 'unit';
+    card.querySelector('.offer-item-price').value = itemData.offer_price != null ? itemData.offer_price : '';
+  }
+
+  container.appendChild(card);
+  refreshOfferItemLabels(isEditMode);
+  calcTotalOffer();
+}
+
+function removeOfferItemCard(btn) {
+  const card = btn.closest('.offer-item-card');
+  if (card) card.remove();
+  refreshOfferItemLabels(false);
+  calcTotalOffer();
+}
+
+function refreshOfferItemLabels(isEditMode = false) {
+  const cards = document.querySelectorAll('#offerItemsContainer .offer-item-card');
+  cards.forEach((card, idx) => {
+    const label = card.querySelector('.offer-item-label');
+    if (label) label.innerText = `ITEM #${idx + 1}`;
+    const btnRemove = card.querySelector('.btn-remove-offer-item');
+    if (btnRemove) {
+      if (!isEditMode && cards.length > 1) {
+        btnRemove.classList.remove('hidden');
+      } else {
+        btnRemove.classList.add('hidden');
+      }
+    }
+  });
+}
+
 function openCreateModal() {
   document.getElementById('editOfferID').value = '';
   document.getElementById('offerModalTitle').innerText = 'Form Input Penawaran Baru';
   document.getElementById('createOfferForm').reset();
   document.getElementById('formOfferDate').valueAsDate = new Date();
-  document.getElementById('formOfferTotalDisplay').innerText = 'Rp 0';
+  document.getElementById('offerItemsContainer').innerHTML = '';
+
+  if (typeof populateOfferCompanyDropdown === 'function') {
+    populateOfferCompanyDropdown('');
+  }
+
+  const btnAdd = document.getElementById('btnAddOfferItem');
+  if (btnAdd) btnAdd.classList.remove('hidden');
+
+  addOfferItemCard(null, false);
   document.getElementById('createModal').classList.remove('hidden');
 }
 
@@ -356,16 +444,28 @@ function openEditOfferModal(id) {
   document.getElementById('offerModalTitle').innerText = 'Edit Data Penawaran';
   document.getElementById('formOfferNumber').value = r.offer_number || '';
   document.getElementById('formOfferDate').value = r.offer_date ? r.offer_date.split('T')[0] : '';
+  if (typeof populateOfferCompanyDropdown === 'function') {
+    populateOfferCompanyDropdown(r.client_company || '');
+  }
   document.getElementById('formClientCompany').value = r.client_company || '';
   document.getElementById('formClientPIC').value = r.client_pic || '';
-  document.getElementById('formOfferItemName').value = r.offer_item_name || '';
-  document.getElementById('formMaterials').value = r.materials || '';
-  document.getElementById('formOfferQty').value = r.offer_qty || 1;
-  document.getElementById('formOfferUnit').value = r.offer_unit || 'unit';
-  document.getElementById('formOfferPrice').value = r.offer_price || 0;
   document.getElementById('formNotes').value = r.notes || '';
-  calcTotalOffer();
+
+  const btnAdd = document.getElementById('btnAddOfferItem');
+  if (btnAdd) btnAdd.classList.add('hidden');
+
+  document.getElementById('offerItemsContainer').innerHTML = '';
+  addOfferItemCard(r, true);
   document.getElementById('createModal').classList.remove('hidden');
+}
+
+function onSelectOfferCompany(companyName) {
+  if (!companyName || typeof allCompanies === 'undefined') return;
+  const comp = allCompanies.find(c => c.name.toLowerCase() === companyName.toLowerCase());
+  const picInput = document.getElementById('formClientPIC');
+  if (comp && comp.default_pic && picInput && !picInput.value.trim()) {
+    picInput.value = comp.default_pic;
+  }
 }
 
 function closeCreateModal() {
@@ -373,47 +473,71 @@ function closeCreateModal() {
 }
 
 function calcTotalOffer() {
-  const q = Number(document.getElementById('formOfferQty').value) || 0;
-  const p = Number(document.getElementById('formOfferPrice').value) || 0;
-  document.getElementById('formOfferTotalDisplay').innerText = 'Rp ' + (q * p).toLocaleString('id-ID');
+  const cards = document.querySelectorAll('#offerItemsContainer .offer-item-card');
+  let grandTotal = 0;
+  cards.forEach(card => {
+    const q = Number(card.querySelector('.offer-item-qty')?.value) || 0;
+    const p = Number(card.querySelector('.offer-item-price')?.value) || 0;
+    const sub = q * p;
+    grandTotal += sub;
+    const subEl = card.querySelector('.offer-item-subtotal');
+    if (subEl) subEl.innerText = 'Rp ' + sub.toLocaleString('id-ID');
+  });
+  document.getElementById('formOfferTotalDisplay').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
 }
 
 async function submitOfferForm(e) {
   e.preventDefault();
   const editID = document.getElementById('editOfferID').value;
-  const payload = {
-    offer_number: document.getElementById('formOfferNumber').value,
-    offer_date: document.getElementById('formOfferDate').value,
-    client_company: document.getElementById('formClientCompany').value,
-    client_pic: document.getElementById('formClientPIC').value,
-    offer_item_name: document.getElementById('formOfferItemName').value,
-    materials: document.getElementById('formMaterials').value,
-    offer_qty: Number(document.getElementById('formOfferQty').value),
-    offer_unit: document.getElementById('formOfferUnit').value,
-    offer_price: Number(document.getElementById('formOfferPrice').value),
-    notes: document.getElementById('formNotes').value
-  };
+  const offerNumber = document.getElementById('formOfferNumber').value;
+  const offerDate = document.getElementById('formOfferDate').value;
+  const clientCompany = document.getElementById('formClientCompany').value;
+  const clientPIC = document.getElementById('formClientPIC').value;
+  const notes = document.getElementById('formNotes').value;
 
-  const url = editID ? `/api/v1/records/${editID}` : '/api/v1/records';
-  const method = editID ? 'PUT' : 'POST';
+  const cards = Array.from(document.querySelectorAll('#offerItemsContainer .offer-item-card'));
+  const payloads = cards.map(card => ({
+    offer_number: offerNumber,
+    offer_date: offerDate,
+    client_company: clientCompany,
+    client_pic: clientPIC,
+    offer_item_name: card.querySelector('.offer-item-name').value,
+    materials: card.querySelector('.offer-item-materials').value,
+    offer_qty: Number(card.querySelector('.offer-item-qty').value),
+    offer_unit: card.querySelector('.offer-item-unit').value,
+    offer_price: Number(card.querySelector('.offer-item-price').value),
+    notes: notes
+  }));
 
   try {
-    const res = await fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-      closeCreateModal();
-      loadRecords();
+    if (editID) {
+      const res = await fetch(`/api/v1/records/${editID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(payloads[0])
+      });
+      if (!res.ok) throw new Error('Gagal memperbarui penawaran');
     } else {
-      alert('Gagal menyimpan penawaran');
+      for (const payload of payloads) {
+        const res = await fetch('/api/v1/records', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Gagal menyimpan salah satu item penawaran');
+      }
     }
+
+    closeCreateModal();
+    loadRecords();
   } catch (err) {
-    alert('Koneksi server gagal');
+    alert(err.message || 'Koneksi server gagal');
   }
 }
 
@@ -477,7 +601,9 @@ function openAttachModal(id) {
       vat = grand - sub;
     }
 
-    document.getElementById('attachPOVAT').value = vat;
+    const vatEl = document.getElementById('attachPOVAT');
+    vatEl.value = vat;
+    vatEl.dataset.rate = (sub > 0 && vat > 0) ? (vat / sub).toString() : '0';
     document.getElementById('attachPOGrandTotal').value = grand;
 
     const totalsCard = document.getElementById('aiPOTotalsCard');
@@ -499,7 +625,9 @@ function openAttachModal(id) {
     document.getElementById('attachPOQty').value = r.offer_qty;
     document.getElementById('attachPOUnit').value = r.offer_unit;
     document.getElementById('attachPOPrice').value = r.offer_price;
-    document.getElementById('attachPOVAT').value = 0;
+    const vatEl = document.getElementById('attachPOVAT');
+    vatEl.value = 0;
+    vatEl.dataset.rate = '0';
     document.getElementById('attachPOGrandTotal').value = 0;
 
     const totalsCard = document.getElementById('aiPOTotalsCard');
@@ -509,12 +637,37 @@ function openAttachModal(id) {
   // Reset input file extract
   const fileInput = document.getElementById('aiPOFileInput');
   if (fileInput) fileInput.value = '';
+  const selectorBox = document.getElementById('aiPOItemSelectorBox');
+  if (selectorBox) selectorBox.classList.add('hidden');
+  window._lastAIExtractedPO = null;
 
   document.getElementById('attachModal').classList.remove('hidden');
 }
 
 function closeAttachModal() {
   document.getElementById('attachModal').classList.add('hidden');
+}
+
+function recalculateAttachPOTotals() {
+  const totalsCard = document.getElementById('aiPOTotalsCard');
+  if (!totalsCard || totalsCard.classList.contains('hidden')) return;
+
+  const price = Number(document.getElementById('attachPOPrice')?.value) || 0;
+  const qty = Number(document.getElementById('attachPOQty')?.value) || 0;
+  const sub = price * qty;
+
+  const vatEl = document.getElementById('attachPOVAT');
+  const rate = Number(vatEl?.dataset.rate) || 0;
+  const vat = Math.round(sub * rate);
+  const grand = sub + vat;
+
+  document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+  document.getElementById('aiPOVATText').innerText = 'Rp ' + vat.toLocaleString('id-ID');
+  document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + grand.toLocaleString('id-ID');
+
+  if (vatEl) vatEl.value = vat;
+  const grandEl = document.getElementById('attachPOGrandTotal');
+  if (grandEl) grandEl.value = grand;
 }
 
 async function submitAttachPO(e) {
@@ -565,6 +718,106 @@ async function toggleDelivered(id, currentStatus) {
 }
 
 
+function findBestMatchingPOItemIndex(items, targetOfferName) {
+  if (!items || items.length <= 1 || !targetOfferName) return 0;
+
+  const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
+  const bigrams = (str) => {
+    const s = str.toLowerCase().replace(/\s+/g, '');
+    const set = new Set();
+    for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2));
+    return set;
+  };
+
+  const offerWords = normalize(targetOfferName);
+  let bestIdx = 0;
+  let bestScore = -1;
+
+  items.forEach((item, idx) => {
+    const itemName = item.item_name || '';
+    const itemWords = normalize(itemName);
+    let score = 0;
+
+    offerWords.forEach(ow => {
+      itemWords.forEach(iw => {
+        if (ow === iw) {
+          score += 10;
+        } else if (ow.includes(iw) || iw.includes(ow)) {
+          score += 6;
+        } else {
+          const b1 = bigrams(ow);
+          const b2 = bigrams(iw);
+          let overlap = 0;
+          b1.forEach(g => { if (b2.has(g)) overlap++; });
+          const sim = (2 * overlap) / ((b1.size + b2.size) || 1);
+          if (sim >= 0.6) score += 5;
+        }
+      });
+    });
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = idx;
+    }
+  });
+
+  return bestIdx;
+}
+
+function applyAIExtractedItem(idx) {
+  const data = window._lastAIExtractedPO;
+  if (!data || !data.items || !data.items[idx]) return;
+
+  const item = data.items[idx];
+  if (document.getElementById('attachPOItemName')) {
+    document.getElementById('attachPOItemName').value = item.item_name || '';
+  }
+  if (document.getElementById('attachPOQty')) {
+    document.getElementById('attachPOQty').value = item.qty || 1;
+  }
+  if (document.getElementById('attachPOUnit')) {
+    document.getElementById('attachPOUnit').value = item.unit || 'unit';
+  }
+  if (document.getElementById('attachPOPrice')) {
+    document.getElementById('attachPOPrice').value = item.unit_price || 0;
+  }
+
+  const docSub = Number(data.sub_total) || 0;
+  const docGrand = Number(data.grand_total) || docSub;
+  let docVat = Number(data.total_vat) || 0;
+  if ((docVat === 0 && docGrand > docSub) || (docGrand > docSub && Math.abs((docSub + docVat) - docGrand) > 100)) {
+    docVat = docGrand - docSub;
+  }
+  const vatRate = (docSub > 0 && docVat > 0) ? (docVat / docSub) : 0;
+
+  let sub = docSub;
+  let vat = docVat;
+  let grand = docGrand;
+
+  if (data.items.length > 1) {
+    sub = Number(item.total_price) || ((Number(item.unit_price) || 0) * (Number(item.qty) || 1));
+    vat = Math.round(sub * vatRate);
+    grand = sub + vat;
+  }
+
+  const totalsCard = document.getElementById('aiPOTotalsCard');
+  if (totalsCard) {
+    totalsCard.classList.remove('hidden');
+    document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+    document.getElementById('aiPOVATText').innerText = 'Rp ' + vat.toLocaleString('id-ID');
+    document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + grand.toLocaleString('id-ID');
+
+    const vatEl = document.getElementById('attachPOVAT');
+    vatEl.value = vat;
+    vatEl.dataset.rate = vatRate.toString();
+    document.getElementById('attachPOGrandTotal').value = grand;
+  }
+}
+
+function onSelectAIItem(idx) {
+  applyAIExtractedItem(Number(idx));
+}
+
 // Fungsi mengirim file PDF/Foto ke backend dan mengisi form Attach PO secara otomatis via AI
 async function uploadAndExtractPO() {
   const fileInput = document.getElementById('aiPOFileInput');
@@ -606,6 +859,7 @@ async function uploadAndExtractPO() {
     }
 
     const data = result.data;
+    window._lastAIExtractedPO = data;
 
     if (data.po_number && document.getElementById('attachPONumber')) {
       document.getElementById('attachPONumber').value = data.po_number;
@@ -614,48 +868,61 @@ async function uploadAndExtractPO() {
       document.getElementById('attachPODate').value = data.po_date;
     }
 
-    if (data.items && data.items.length > 0) {
-      const item = data.items[0];
-      if (document.getElementById('attachPOItemName')) {
-        document.getElementById('attachPOItemName').value = item.item_name;
-      }
-      if (document.getElementById('attachPOQty')) {
-        document.getElementById('attachPOQty').value = item.qty;
-      }
-      if (document.getElementById('attachPOUnit')) {
-        document.getElementById('attachPOUnit').value = item.unit;
-      }
-      if (document.getElementById('attachPOPrice')) {
-        document.getElementById('attachPOPrice').value = item.unit_price;
-      }
-    } else if (data.sub_total && document.getElementById('attachPOPrice')) {
-      document.getElementById('attachPOPrice').value = data.sub_total;
+    const docSub = Number(data.sub_total) || 0;
+    const docGrand = Number(data.grand_total) || docSub;
+    let docVat = Number(data.total_vat) || 0;
+    if ((docVat === 0 && docGrand > docSub) || (docGrand > docSub && Math.abs((docSub + docVat) - docGrand) > 100)) {
+      docVat = docGrand - docSub;
     }
 
-    const totalsCard = document.getElementById('aiPOTotalsCard');
-    if (totalsCard) {
-      totalsCard.classList.remove('hidden');
-      const sub = Number(data.sub_total) || 0;
-      const grand = Number(data.grand_total) || sub;
-      let vat = Number(data.total_vat) || 0;
+    const selectorBox = document.getElementById('aiPOItemSelectorBox');
+    const selectEl = document.getElementById('aiPOItemSelect');
 
-      // Jika AI membaca VAT 0 atau selisih ada (grand > sub), hitung langsung selisihnya
-      if ((vat === 0 && grand > sub) || (grand > sub && Math.abs((sub + vat) - grand) > 100)) {
-        vat = grand - sub;
+    let selectedSub = docSub;
+    let selectedVat = docVat;
+    let selectedGrand = docGrand;
+
+    if (data.items && data.items.length > 0) {
+      const targetID = Number(document.getElementById('attachTargetID')?.value);
+      const targetRec = allRecords.find(r => r.id === targetID);
+      const bestIdx = findBestMatchingPOItemIndex(data.items, targetRec?.offer_item_name || '');
+
+      if (data.items.length > 1 && selectorBox && selectEl) {
+        selectEl.innerHTML = data.items.map((it, idx) =>
+          `<option value="${idx}" ${idx === bestIdx ? 'selected' : ''}>${idx + 1}. ${it.item_name} (Rp ${Number(it.unit_price || 0).toLocaleString('id-ID')})</option>`
+        ).join('');
+        selectorBox.classList.remove('hidden');
+      } else if (selectorBox) {
+        selectorBox.classList.add('hidden');
       }
 
-      document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + sub.toLocaleString('id-ID');
-      document.getElementById('aiPOVATText').innerText = 'Rp ' + vat.toLocaleString('id-ID');
-      document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + grand.toLocaleString('id-ID');
-
-      document.getElementById('attachPOVAT').value = vat;
-      document.getElementById('attachPOGrandTotal').value = grand;
+      applyAIExtractedItem(bestIdx);
+      selectedSub = Number(data.items[bestIdx].total_price) || ((Number(data.items[bestIdx].unit_price) || 0) * (Number(data.items[bestIdx].qty) || 1));
+      if (data.items.length === 1) selectedSub = docSub;
+      selectedVat = Number(document.getElementById('attachPOVAT')?.value) || 0;
+      selectedGrand = Number(document.getElementById('attachPOGrandTotal')?.value) || selectedSub;
+    } else {
+      if (selectorBox) selectorBox.classList.add('hidden');
+      if (data.sub_total && document.getElementById('attachPOPrice')) {
+        document.getElementById('attachPOPrice').value = data.sub_total;
+      }
+      const totalsCard = document.getElementById('aiPOTotalsCard');
+      if (totalsCard) {
+        totalsCard.classList.remove('hidden');
+        document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + docSub.toLocaleString('id-ID');
+        document.getElementById('aiPOVATText').innerText = 'Rp ' + docVat.toLocaleString('id-ID');
+        document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + docGrand.toLocaleString('id-ID');
+        const vatEl = document.getElementById('attachPOVAT');
+        vatEl.value = docVat;
+        vatEl.dataset.rate = (docSub > 0 && docVat > 0) ? (docVat / docSub).toString() : '0';
+        document.getElementById('attachPOGrandTotal').value = docGrand;
+      }
     }
 
     Swal.fire({
       icon: 'success',
       title: 'Berhasil Diekstrak AI!',
-      html: `<b>No PO:</b> ${data.po_number || '-'}<br><b>Sub Total:</b> Rp ${sub.toLocaleString('id-ID')}<br><b>PPN (VAT):</b> Rp ${vat.toLocaleString('id-ID')}<br><b>Grand Total:</b> Rp ${grand.toLocaleString('id-ID')}`,
+      html: `<b>No PO:</b> ${data.po_number || '-'}<br><b>Sub Total:</b> Rp ${selectedSub.toLocaleString('id-ID')}<br><b>PPN (VAT):</b> Rp ${selectedVat.toLocaleString('id-ID')}<br><b>Grand Total:</b> Rp ${selectedGrand.toLocaleString('id-ID')}`,
       timer: 4500
     });
 

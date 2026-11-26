@@ -442,6 +442,8 @@ func DeletePORecord(c *gin.Context) {
 	rec.POItemName = nil
 	rec.POPrice = nil
 	rec.POTotal = nil
+	rec.POVAT = nil
+	rec.POGrandTotal = nil
 	rec.UnitPriceDiff = nil
 	rec.TotalPriceDiff = nil
 

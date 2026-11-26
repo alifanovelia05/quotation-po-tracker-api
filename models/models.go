@@ -129,3 +129,30 @@ type POExtractionResponse struct {
 	GrandTotal    float64           `json:"grand_total"`
 	Items         []POItemExtracted `json:"items"`
 }
+
+type Company struct {
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	Name       string    `json:"name" gorm:"uniqueIndex" binding:"required"`
+	DefaultPIC string    `json:"default_pic"`
+	Notes      string    `json:"notes"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type CompanyRequest struct {
+	Name       string `json:"name" binding:"required"`
+	DefaultPIC string `json:"default_pic"`
+	Notes      string `json:"notes"`
+}
+
+type CompanyWithStats struct {
+	ID              uint    `json:"id"`
+	Name            string  `json:"name"`
+	DefaultPIC      string  `json:"default_pic"`
+	Notes           string  `json:"notes"`
+	TotalOffers     int     `json:"total_offers"`
+	TotalOfferValue float64 `json:"total_offer_value"`
+	TotalPODeals    int     `json:"total_po_deals"`
+	TotalPOValue    float64 `json:"total_po_value"`
+	WinRate         int     `json:"win_rate"`
+}

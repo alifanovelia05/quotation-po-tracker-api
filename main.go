@@ -40,6 +40,10 @@ func main() {
 			protected.PATCH("/records/:id/status", handlers.UpdateOperationalStatus)
 			protected.GET("/logs", handlers.GetActivityLogs)
 			protected.POST("/records/extract-po-ai", handlers.ExtractPOAI)
+			protected.GET("/companies", handlers.GetCompanies)
+			protected.POST("/companies", handlers.CreateCompany)
+			protected.PUT("/companies/:id", handlers.UpdateCompany)
+			protected.DELETE("/companies/:id", handlers.DeleteCompany)
 		}
 	}
 
