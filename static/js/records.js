@@ -103,24 +103,32 @@ function renderTable(records) {
       ? `<span class="badge bg-emerald-100 text-emerald-700">SUDAH PO</span>`
       : `<span class="badge bg-amber-100 text-amber-700">BELUM PO</span>`;
 
+    // Ambil HANYA 1 nama pertama (potong berdasarkan koma, 'dan', atau '/')
+    let picDisplay = '-';
+    if (r.client_pic) {
+      // Ambil bagian sebelum koma atau kata 'dan' atau '/'
+      let first = r.client_pic.split(/,|\/|\bdan\b/i)[0].trim();
+      picDisplay = first || r.client_pic;
+    }
+
     const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50/80 transition-colors";
+    tr.className = "hover:bg-slate-50/80 transition-colors divide-x divide-slate-200/70";
     tr.innerHTML = `
-      <td class="p-3.5 text-slate-500 whitespace-nowrap">${r.offer_date ? r.offer_date.split('T')[0] : '-'}</td>
-      <td class="p-3.5 whitespace-nowrap font-mono text-[11px] font-bold text-blue-700">${r.offer_number || '-'}</td>
-      <td class="p-3.5">
-        <div class="font-semibold text-slate-800">${r.offer_item_name}</div>
+      <td class="py-3 px-3 text-slate-500 whitespace-nowrap text-xs">${r.offer_date ? r.offer_date.split('T')[0] : '-'}</td>
+      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-blue-700">${r.offer_number || '-'}</td>
+      <td class="py-3 px-4 min-w-[220px]">
+        <div class="font-semibold text-slate-800 text-xs">${r.offer_item_name}</div>
         <div class="text-[10px] text-slate-400 line-clamp-1">${r.materials || '-'}</div>
       </td>
-      <td class="p-3.5 whitespace-nowrap">
-        <span class="font-bold uppercase text-slate-700">${r.client_company}</span>
-        <span class="text-slate-400 text-[11px] block">${r.client_pic || '-'}</span>
+      <td class="py-3 px-3 whitespace-nowrap">
+        <span class="font-bold uppercase text-slate-700 text-xs block">${r.client_company}</span>
+        <span class="text-slate-400 text-[11px] block" title="${r.client_pic || '-'}">${picDisplay}</span>
       </td>
-      <td class="p-3.5 whitespace-nowrap font-medium">${r.offer_qty} ${r.offer_unit}</td>
-      <td class="p-3.5 whitespace-nowrap font-semibold">Rp ${Number(r.offer_price).toLocaleString('id-ID')}</td>
-      <td class="p-3.5 whitespace-nowrap text-center">${poBadge}</td>
-      <td class="p-3.5 whitespace-nowrap font-mono text-[11px] font-bold text-slate-800">${r.po_number || '-'}</td>
-      <td class="p-3.5 whitespace-nowrap text-center">
+      <td class="py-3 px-3 whitespace-nowrap text-xs font-medium text-slate-700">${r.offer_qty} ${r.offer_unit}</td>
+      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-slate-800">Rp ${Number(r.offer_price).toLocaleString('id-ID')}</td>
+      <td class="py-3 px-3 whitespace-nowrap text-center">${poBadge}</td>
+      <td class="py-3 px-3 whitespace-nowrap text-xs font-semibold text-slate-800">${r.po_number || '-'}</td>
+      <td class="py-3 px-3 whitespace-nowrap text-center">
         <div class="flex flex-col gap-1.5 min-w-[130px] max-w-[160px] mx-auto text-left">
           <button onclick="openDetailModal(${r.id})"
             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-medium transition shadow-sm">
@@ -129,13 +137,13 @@ function renderTable(records) {
           </button>
           
           ${!isDeal ? `
-            <button onclick="openAttachModal(${r.id}, '${r.offer_item_name}', ${r.offer_qty}, '${r.offer_unit}', ${r.offer_price})"
+            <button onclick="openAttachModal(${r.id})"
               class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium transition shadow-sm">
               <i class="fa-solid fa-file-circle-plus w-3.5 text-center"></i>
               <span>Pasang PO</span>
             </button>
           ` : `
-            <button onclick="openAttachModal(${r.id}, '${r.offer_item_name}', ${r.offer_qty}, '${r.offer_unit}', ${r.offer_price})"
+            <button onclick="openAttachModal(${r.id})"
               class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-medium transition shadow-sm">
               <i class="fa-solid fa-file-pen text-emerald-600 w-3.5 text-center"></i>
               <span>Edit PO</span>
@@ -311,6 +319,8 @@ function openDetailModal(id) {
   document.getElementById('detPOQty').innerText = r.po_qty ? `${r.po_qty} ${r.po_unit || ''}` : '-';
   document.getElementById('detPOPrice').innerText = r.po_price ? 'Rp ' + Number(r.po_price).toLocaleString('id-ID') : '-';
   document.getElementById('detPOTotal').innerText = r.po_total ? 'Rp ' + Number(r.po_total).toLocaleString('id-ID') : '-';
+  document.getElementById('detPOVAT').innerText = r.po_vat ? 'Rp ' + Number(r.po_vat).toLocaleString('id-ID') : 'Rp 0';
+  document.getElementById('detPOGrandTotal').innerText = r.po_grand_total ? 'Rp ' + Number(r.po_grand_total).toLocaleString('id-ID') : (r.po_total ? 'Rp ' + Number(r.po_total).toLocaleString('id-ID') : '-');
 
   const diffUnit = Number(r.unit_price_diff) || 0;
   const diffTotal = Number(r.total_price_diff) || 0;
@@ -441,14 +451,65 @@ async function deletePOOnly(id) {
   }
 }
 
-function openAttachModal(id, itemName, qty, unit, price) {
-  document.getElementById('attachTargetID').value = id;
-  document.getElementById('attachOfferTargetText').innerText = `Penawaran: ${itemName} (${qty} ${unit})`;
-  document.getElementById('attachPONumber').value = '';
-  document.getElementById('attachPOItemName').value = itemName;
-  document.getElementById('attachPOQty').value = qty;
-  document.getElementById('attachPOUnit').value = unit;
-  document.getElementById('attachPOPrice').value = price;
+function openAttachModal(id) {
+  const r = allRecords.find(item => item.id === id);
+  if (!r) return;
+
+  document.getElementById('attachTargetID').value = r.id;
+  document.getElementById('attachOfferTargetText').innerText = `Penawaran: ${r.offer_item_name} (${r.offer_qty} ${r.offer_unit})`;
+  
+  // Jika sudah ada data PO (mode Edit PO), tampilkan data PO yang sudah tersimpan
+  if (r.po_status === 'sudah' && r.po_number) {
+    document.getElementById('attachPONumber').value = r.po_number || '';
+    document.getElementById('attachPOItemName').value = r.po_item_name || r.offer_item_name;
+    document.getElementById('attachPODate').value = r.po_date ? r.po_date.split('T')[0] : '';
+    document.getElementById('attachPOPrice').value = r.po_price != null ? r.po_price : r.offer_price;
+    document.getElementById('attachPOQty').value = r.po_qty != null ? r.po_qty : r.offer_qty;
+    document.getElementById('attachPOUnit').value = r.po_unit || r.offer_unit;
+    
+    // Tampilkan breakdown nilai jika ada
+    let vat = Number(r.po_vat) || 0;
+    const grand = Number(r.po_grand_total) || (Number(r.po_total) || 0);
+    const sub = Number(r.po_total) || (Number(r.po_price || 0) * Number(r.po_qty || 0));
+
+    // Jika VAT di database 0 tapi Grand Total > Sub Total, hitung otomatis selisihnya
+    if (vat === 0 && grand > sub) {
+      vat = grand - sub;
+    }
+
+    document.getElementById('attachPOVAT').value = vat;
+    document.getElementById('attachPOGrandTotal').value = grand;
+
+    const totalsCard = document.getElementById('aiPOTotalsCard');
+    if (totalsCard) {
+      if (sub > 0 || grand > 0) {
+        totalsCard.classList.remove('hidden');
+        document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+        document.getElementById('aiPOVATText').innerText = 'Rp ' + vat.toLocaleString('id-ID');
+        document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + grand.toLocaleString('id-ID');
+      } else {
+        totalsCard.classList.add('hidden');
+      }
+    }
+  } else {
+    // Mode Pasang PO baru (ambil default dari penawaran)
+    document.getElementById('attachPONumber').value = '';
+    document.getElementById('attachPOItemName').value = r.offer_item_name;
+    document.getElementById('attachPODate').valueAsDate = new Date();
+    document.getElementById('attachPOQty').value = r.offer_qty;
+    document.getElementById('attachPOUnit').value = r.offer_unit;
+    document.getElementById('attachPOPrice').value = r.offer_price;
+    document.getElementById('attachPOVAT').value = 0;
+    document.getElementById('attachPOGrandTotal').value = 0;
+
+    const totalsCard = document.getElementById('aiPOTotalsCard');
+    if (totalsCard) totalsCard.classList.add('hidden');
+  }
+
+  // Reset input file extract
+  const fileInput = document.getElementById('aiPOFileInput');
+  if (fileInput) fileInput.value = '';
+
   document.getElementById('attachModal').classList.remove('hidden');
 }
 
@@ -465,7 +526,9 @@ async function submitAttachPO(e) {
     po_date: document.getElementById('attachPODate').value,
     po_price: Number(document.getElementById('attachPOPrice').value),
     po_qty: Number(document.getElementById('attachPOQty').value),
-    po_unit: document.getElementById('attachPOUnit').value
+    po_unit: document.getElementById('attachPOUnit').value,
+    po_vat: Number(document.getElementById('attachPOVAT')?.value) || 0,
+    po_grand_total: Number(document.getElementById('attachPOGrandTotal')?.value) || 0
   };
 
   try {
@@ -499,4 +562,114 @@ async function toggleDelivered(id, currentStatus) {
     body: JSON.stringify({ is_delivered: newStatus })
   });
   loadRecords();
+}
+
+
+// Fungsi mengirim file PDF/Foto ke backend dan mengisi form Attach PO secara otomatis via AI
+async function uploadAndExtractPO() {
+  const fileInput = document.getElementById('aiPOFileInput');
+  const statusEl = document.getElementById('aiExtractionStatus');
+  const btnExtract = document.getElementById('btnExtractPOAI');
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Pilih Dokumen',
+      text: 'Silakan pilih file PDF atau Foto PO terlebih dahulu!'
+    });
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  if (statusEl) statusEl.classList.remove('hidden');
+  if (btnExtract) {
+    btnExtract.disabled = true;
+    btnExtract.classList.add('opacity-50');
+  }
+
+  try {
+    const res = await fetch('/api/v1/records/extract-po-ai', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: formData
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.error || 'Gagal mengekstrak dokumen');
+    }
+
+    const data = result.data;
+
+    if (data.po_number && document.getElementById('attachPONumber')) {
+      document.getElementById('attachPONumber').value = data.po_number;
+    }
+    if (data.po_date && document.getElementById('attachPODate')) {
+      document.getElementById('attachPODate').value = data.po_date;
+    }
+
+    if (data.items && data.items.length > 0) {
+      const item = data.items[0];
+      if (document.getElementById('attachPOItemName')) {
+        document.getElementById('attachPOItemName').value = item.item_name;
+      }
+      if (document.getElementById('attachPOQty')) {
+        document.getElementById('attachPOQty').value = item.qty;
+      }
+      if (document.getElementById('attachPOUnit')) {
+        document.getElementById('attachPOUnit').value = item.unit;
+      }
+      if (document.getElementById('attachPOPrice')) {
+        document.getElementById('attachPOPrice').value = item.unit_price;
+      }
+    } else if (data.sub_total && document.getElementById('attachPOPrice')) {
+      document.getElementById('attachPOPrice').value = data.sub_total;
+    }
+
+    const totalsCard = document.getElementById('aiPOTotalsCard');
+    if (totalsCard) {
+      totalsCard.classList.remove('hidden');
+      const sub = Number(data.sub_total) || 0;
+      const grand = Number(data.grand_total) || sub;
+      let vat = Number(data.total_vat) || 0;
+
+      // Jika AI membaca VAT 0 atau selisih ada (grand > sub), hitung langsung selisihnya
+      if ((vat === 0 && grand > sub) || (grand > sub && Math.abs((sub + vat) - grand) > 100)) {
+        vat = grand - sub;
+      }
+
+      document.getElementById('aiPOSubTotalText').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+      document.getElementById('aiPOVATText').innerText = 'Rp ' + vat.toLocaleString('id-ID');
+      document.getElementById('aiPOGrandTotalText').innerText = 'Rp ' + grand.toLocaleString('id-ID');
+
+      document.getElementById('attachPOVAT').value = vat;
+      document.getElementById('attachPOGrandTotal').value = grand;
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil Diekstrak AI!',
+      html: `<b>No PO:</b> ${data.po_number || '-'}<br><b>Sub Total:</b> Rp ${sub.toLocaleString('id-ID')}<br><b>PPN (VAT):</b> Rp ${vat.toLocaleString('id-ID')}<br><b>Grand Total:</b> Rp ${grand.toLocaleString('id-ID')}`,
+      timer: 4500
+    });
+
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Ekstraksi Gagal',
+      text: err.message
+    });
+  } finally {
+    if (statusEl) statusEl.classList.add('hidden');
+    if (btnExtract) {
+      btnExtract.disabled = false;
+      btnExtract.classList.remove('opacity-50');
+    }
+  }
 }

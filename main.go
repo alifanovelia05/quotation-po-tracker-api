@@ -38,6 +38,8 @@ func main() {
 			protected.PATCH("/records/:id/attach-po", handlers.AttachPOToRecord)
 			protected.DELETE("/records/:id/po", handlers.DeletePORecord)
 			protected.PATCH("/records/:id/status", handlers.UpdateOperationalStatus)
+			protected.GET("/logs", handlers.GetActivityLogs)
+			protected.POST("/records/extract-po-ai", handlers.ExtractPOAI)
 		}
 	}
 

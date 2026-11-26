@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Argra Teknik Mandiri - B2B Quotation & PO Manager</title>
-  <!-- Tailwind CSS & Lucide Icons & Chart.js & SheetJS (Excel) -->
+  <title>Perusahaan A - B2B Quotation & PO Manager</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -16,7 +16,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
-  <!-- ==================== LOGIN SCREEN OVERLAY ==================== -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
       <div class="text-center mb-6">
@@ -24,7 +23,7 @@
           <i class="fa-solid fa-file-invoice-dollar text-2xl"></i>
         </div>
         <h2 class="text-2xl font-bold text-slate-800">Login Sistem</h2>
-        <p class="text-sm font-medium text-blue-600 mt-1">Argra Teknik Mandiri</p>
+        <p class="text-sm font-medium text-blue-600 mt-1">Perusahaan A</p>
         <p class="text-xs text-slate-400 mt-0.5">Quotation & PO Tracker Management</p>
       </div>
       <form id="loginForm" class="space-y-4">
@@ -61,7 +60,7 @@
           A
         </div>
         <div>
-          <h1 class="font-bold text-xs tracking-wide">Argra Teknik Mandiri</h1>
+          <h1 class="font-bold text-xs tracking-wide">Perusahaan A</h1>
           <p class="text-[9px] text-slate-400">Quotation & PO Tracker</p>
         </div>
       </div>
@@ -85,7 +84,7 @@
               A
             </div>
             <div>
-              <h1 class="font-bold text-white tracking-wide text-sm leading-tight">Argra Teknik Mandiri</h1>
+              <h1 class="font-bold text-white tracking-wide text-sm leading-tight">Perusahaan A</h1>
               <p class="text-[10px] text-slate-400 mt-0.5">Quotation & PO Tracker</p>
             </div>
           </div>
@@ -372,27 +371,27 @@
         <!-- Records Table -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div class="overflow-x-auto max-h-[600px]">
-            <table class="w-full text-left text-xs">
+            <table class="w-full text-left text-xs border-collapse">
               <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200/80 sticky top-0 z-10">
-                <tr>
-                  <th class="p-3.5 whitespace-nowrap cursor-pointer hover:bg-slate-100 select-none transition" onclick="toggleDateSort()" title="Klik untuk mengurutkan terbaru / terlama">
-                    <div class="flex items-center gap-1.5 text-slate-700">
-                      <span>Tgl Penawaran</span>
+                <tr class="divide-x divide-slate-200/80">
+                  <th class="py-3.5 px-3 w-28 whitespace-nowrap cursor-pointer hover:bg-slate-100 select-none transition" onclick="toggleDateSort()" title="Klik untuk mengurutkan terbaru / terlama">
+                    <div class="flex items-center gap-1 text-slate-700">
+                      <span>Tgl</span>
                       <i id="dateSortIcon" class="fa-solid fa-arrow-down-wide-short text-blue-600 text-xs"></i>
-                      <span id="dateSortLabel" class="text-[9px] font-normal text-slate-400 bg-slate-200/60 px-1.5 py-0.5 rounded">Terbaru</span>
+                      <span id="dateSortLabel" class="text-[9px] font-normal text-slate-400 bg-slate-200/60 px-1 py-0.5 rounded">Baru</span>
                     </div>
                   </th>
-                  <th class="p-3.5 font-mono whitespace-nowrap">No Penawaran</th>
-                  <th class="p-3.5">Nama Barang & Bahan</th>
-                  <th class="p-3.5">Klien / PIC</th>
-                  <th class="p-3.5">Qty</th>
-                  <th class="p-3.5">Harga Penawaran</th>
-                  <th class="p-3.5 text-center">Status PO</th>
-                  <th class="p-3.5 font-mono">No PO</th>
-                  <th class="p-3.5 text-center w-52">Aksi</th>
+                  <th class="py-3.5 px-3 w-32 whitespace-nowrap">No Penawaran</th>
+                  <th class="py-3.5 px-4 min-w-[220px]">Nama Barang & Bahan</th>
+                  <th class="py-3.5 px-3 w-36 whitespace-nowrap">Klien / PIC</th>
+                  <th class="py-3.5 px-3 w-20 whitespace-nowrap">Qty</th>
+                  <th class="py-3.5 px-3 w-32 whitespace-nowrap">Harga Penawaran</th>
+                  <th class="py-3.5 px-3 text-center w-28 whitespace-nowrap">Status PO</th>
+                  <th class="py-3.5 px-3 w-28 whitespace-nowrap">No PO</th>
+                  <th class="py-3.5 px-3 text-center w-40 whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="recordsTableBody" class="divide-y divide-slate-100">
+              <tbody id="recordsTableBody" class="divide-y divide-slate-200/70">
                 <!-- Data populated dynamically via JS -->
               </tbody>
             </table>
@@ -604,7 +603,7 @@
 
   <!-- ==================== MODAL: ATTACH PO ==================== -->
   <div id="attachModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-base font-bold text-slate-800">Sahkan Dokumen PO Klien</h3>
         <button onclick="closeAttachModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -613,6 +612,28 @@
 
       <form id="attachPOForm" onsubmit="submitAttachPO(event)" class="space-y-3 text-xs">
         <input type="hidden" id="attachTargetID">
+
+        <!-- KOTAK FITUR AI AUTO-FILL PO -->
+        <div class="p-3 bg-purple-50/70 border border-purple-200/80 rounded-xl space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-[11px] font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Auto-Fill AI (Upload PDF/Foto PO)
+            </label>
+            <span class="text-[10px] bg-purple-200/60 text-purple-800 font-semibold px-2 py-0.5 rounded-full">Otomatis</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="aiPOFileInput" accept=".pdf,image/*" 
+              class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer">
+            <button type="button" id="btnExtractPOAI" onclick="uploadAndExtractPO()" 
+              class="shrink-0 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt"></i> Ekstrak
+            </button>
+          </div>
+          <p id="aiExtractionStatus" class="text-[11px] text-purple-700 font-medium hidden flex items-center gap-1.5 pt-0.5">
+            <i class="fa-solid fa-spinner fa-spin text-purple-600"></i> AI sedang membaca dokumen, mohon tunggu...
+          </p>
+        </div>
+
         <div>
           <label class="block font-semibold text-slate-600 mb-1">Nomor PO Resmi Klien</label>
           <input type="text" id="attachPONumber" required placeholder="Contoh: 4212034243" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
@@ -640,6 +661,24 @@
             <label class="block font-semibold text-slate-600 mb-1">Satuan PO</label>
             <input type="text" id="attachPOUnit" required placeholder="unit / pcs" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500">
           </div>
+        </div>
+
+        <!-- RINGKASAN PAJAK & GRAND TOTAL PO (HASIL AI) -->
+        <div id="aiPOTotalsCard" class="hidden p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+          <div class="flex justify-between text-slate-600">
+            <span>Sub Total Dokumen:</span>
+            <span id="aiPOSubTotalText" class="font-semibold text-slate-800">Rp 0</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>PPN / VAT (Pajak):</span>
+            <span id="aiPOVATText" class="font-semibold text-amber-700">Rp 0</span>
+          </div>
+          <div class="flex justify-between text-slate-800 font-bold border-t border-slate-200/80 pt-1">
+            <span>Grand Total PO:</span>
+            <span id="aiPOGrandTotalText" class="text-emerald-700 font-bold">Rp 0</span>
+          </div>
+          <input type="hidden" id="attachPOVAT" value="0">
+          <input type="hidden" id="attachPOGrandTotal" value="0">
         </div>
         <div class="pt-3 flex justify-end gap-2">
           <button type="button" onclick="closeAttachModal()" class="px-4 py-2 border rounded-xl text-slate-600 hover:bg-slate-50">Batal</button>
@@ -738,8 +777,18 @@
               <span id="detPOPrice" class="font-bold text-emerald-700"></span>
             </div>
             <div>
-              <span class="text-slate-400 block text-[10px]">Total Nilai PO:</span>
-              <span id="detPOTotal" class="font-bold text-emerald-700 text-sm"></span>
+              <span class="text-slate-400 block text-[10px]">Sub Total PO:</span>
+              <span id="detPOTotal" class="font-bold text-slate-800 text-xs"></span>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <span class="text-slate-400 block text-[10px]">PPN / VAT (Pajak):</span>
+              <span id="detPOVAT" class="font-bold text-amber-700 text-xs"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Grand Total PO (+ Pajak):</span>
+              <span id="detPOGrandTotal" class="font-bold text-emerald-700 text-sm"></span>
             </div>
           </div>
           <div class="pt-1 bg-white p-2 rounded-lg border border-emerald-100">
@@ -758,9 +807,9 @@
   </div>
 
   <!-- ==================== EXTERNAL JAVASCRIPT MODULES ==================== -->
-  <script src="/static/js/auth.js"></script>
-  <script src="/static/js/records.js"></script>
-  <script src="/static/js/smartmatch.js"></script>
-  <script src="/static/js/rekap.js"></script>
+  <script src="/static/js/auth.js?v=2"></script>
+  <script src="/static/js/records.js?v=7"></script>
+  <script src="/static/js/smartmatch.js?v=2"></script>
+  <script src="/static/js/rekap.js?v=2"></script>
 </body>
 </html>

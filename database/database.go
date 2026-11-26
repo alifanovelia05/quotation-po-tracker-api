@@ -26,6 +26,7 @@ func InitDB() {
 	err = DB.AutoMigrate(
 		&models.User{},
 		&models.TransactionRecord{},
+		&models.ActivityLog{},
 	)
 	if err != nil {
 		log.Fatalf("Gagal migrasi database: %v", err)
@@ -99,15 +100,15 @@ func seedInitialData() {
 
 	sampleRecords := []models.TransactionRecord{
 		{
-			OfferDate:     date1,
-			OfferQty:      10,
-			OfferUnit:     "unit",
-			OfferItemName: "Repair Tutup Dan Chamber Juice SUS 304 Area Produksi",
-			Materials:     "Plate SUS 304 tebal 1.5mm, List Chamber, Clamp Toggle Lock 2 inch, Welder",
-			ClientCompany: "client-a",
-			ClientPIC:     "budi",
-			OfferPrice:    700000,
-			OfferTotal:    7000000,
+			OfferDate:      date1,
+			OfferQty:       10,
+			OfferUnit:      "unit",
+			OfferItemName:  "Repair Tutup Dan Chamber Juice SUS 304 Area Produksi",
+			Materials:      "Plate SUS 304 tebal 1.5mm, List Chamber, Clamp Toggle Lock 2 inch, Welder",
+			ClientCompany:  "client-a",
+			ClientPIC:      "budi",
+			OfferPrice:     700000,
+			OfferTotal:     7000000,
 			PODate:         &poDateDeal,
 			POQty:          &poQtyDeal,
 			POUnit:         &poUnitDeal,

@@ -46,6 +46,8 @@ type TransactionRecord struct {
 	POItemName     *string    `json:"po_item_name"`
 	POPrice        *float64   `json:"po_price"`
 	POTotal        *float64   `json:"po_total"`
+	POVAT          *float64   `json:"po_vat"`
+	POGrandTotal   *float64   `json:"po_grand_total"`
 	UnitPriceDiff  *float64   `json:"unit_price_diff"`
 	TotalPriceDiff *float64   `json:"total_price_diff"`
 
@@ -71,14 +73,16 @@ type CreateOfferRequest struct {
 }
 
 type AttachPORequest struct {
-	PODate     string   `json:"po_date" binding:"required"`
-	POQty      int      `json:"po_qty" binding:"required,min=1"`
-	POUnit     string   `json:"po_unit" binding:"required"`
-	PONumber   string   `json:"po_number" binding:"required"`
-	POItemName string   `json:"po_item_name" binding:"required"`
-	POPrice    *float64 `json:"po_price"`
-	POTotal    *float64 `json:"po_total"`
-	Notes      string   `json:"notes"`
+	PODate       string   `json:"po_date" binding:"required"`
+	POQty        int      `json:"po_qty" binding:"required,min=1"`
+	POUnit       string   `json:"po_unit" binding:"required"`
+	PONumber     string   `json:"po_number" binding:"required"`
+	POItemName   string   `json:"po_item_name" binding:"required"`
+	POPrice      *float64 `json:"po_price"`
+	POTotal      *float64 `json:"po_total"`
+	POVAT        *float64 `json:"po_vat"`
+	POGrandTotal *float64 `json:"po_grand_total"`
+	Notes        string   `json:"notes"`
 }
 
 type UpdateStatusRequest struct {
@@ -97,4 +101,31 @@ type SmartMatchResult struct {
 	ItemNameMatched bool              `json:"item_name_matched"`
 	MaterialMatched bool              `json:"material_matched"`
 	MatchReasons    []string          `json:"match_reasons"`
+}
+
+type ActivityLog struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UserID    uint      `json:"user_id"`
+	Username  string    `json:"username"`
+	Action    string    `json:"action"`
+	Details   string    `json:"details"`
+}
+
+type POItemExtracted struct {
+	ItemName   string  `json:"item_name"`
+	Qty        int     `json:"qty"`
+	Unit       string  `json:"unit"`
+	UnitPrice  float64 `json:"unit_price"`
+	TotalPrice float64 `json:"total_price"`
+}
+
+type POExtractionResponse struct {
+	PONumber      string            `json:"po_number"`
+	PODate        string            `json:"po_date"`
+	ClientCompany string            `json:"client_company"`
+	SubTotal      float64           `json:"sub_total"`
+	TotalVAT      float64           `json:"total_vat"`
+	GrandTotal    float64           `json:"grand_total"`
+	Items         []POItemExtracted `json:"items"`
 }

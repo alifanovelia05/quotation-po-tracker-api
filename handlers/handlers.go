@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -8,9 +11,31 @@ import (
 
 	"project1/database"
 	"project1/models"
+	"project1/services"
 
 	"github.com/gin-gonic/gin"
 )
+
+func LogActivityAsync(userID uint, username, action, details string) {
+
+	go func(uID uint, uname, act, det string) {
+		time.Sleep(50 * time.Millisecond)
+
+		activity := models.ActivityLog{
+			UserID:    uID,
+			Username:  uname,
+			Action:    act,
+			Details:   det,
+			CreatedAt: time.Now(),
+		}
+
+		if err := database.DB.Create(&activity).Error; err != nil {
+			log.Printf("[GOROUTINE ERROR] Gagal mencatat log aktivitas: %v\n", err)
+		} else {
+			log.Printf("[AUDIT LOG - GOROUTINE] Sukses dicatat di background -> User: %s | Action: %s | Info: %s\n", uname, act, det)
+		}
+	}(userID, username, action, details)
+}
 
 func CreateOfferRecord(c *gin.Context) {
 	var req models.CreateOfferRequest
@@ -37,16 +62,27 @@ func CreateOfferRecord(c *gin.Context) {
 		ClientPIC:     strings.ToLower(strings.TrimSpace(req.ClientPIC)),
 		OfferPrice:    req.OfferPrice,
 		OfferTotal:    totalOffer,
-		POStatus:       "belum",
+		POStatus:      "belum",
 		Notes:         req.Notes,
-		IsDelivered:    "belum",
-		IsPaid:         "belum",
+		IsDelivered:   "belum",
+		IsPaid:        "belum",
 	}
 
 	if err := database.DB.Create(&record).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan penawaran: " + err.Error()})
 		return
 	}
+
+	userIDVal, _ := c.Get("user_id")
+	usernameVal, _ := c.Get("username")
+	userID, _ := userIDVal.(uint)
+	username, _ := usernameVal.(string)
+	if username == "" {
+		username = "system"
+	}
+
+	logDetail := fmt.Sprintf("Membuat penawaran baru No: %s (%s - Rp %.0f)", record.OfferNumber, record.ClientCompany, record.OfferTotal)
+	LogActivityAsync(userID, username, "CREATE_OFFER", logDetail)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Baris penawaran berhasil dicatat",
@@ -271,6 +307,9 @@ func AttachPOToRecord(c *gin.Context) {
 	rec.POItemName = &req.POItemName
 	rec.POPrice = &poPrice
 	rec.POTotal = &poTotal
+	log.Printf("[DEBUG ATTACH PO] Req POVAT: %v, POGrandTotal: %v\n", req.POVAT, req.POGrandTotal)
+	rec.POVAT = req.POVAT
+	rec.POGrandTotal = req.POGrandTotal
 	rec.UnitPriceDiff = &diffUnitPrice
 	rec.TotalPriceDiff = &diffTotalPrice
 
@@ -411,5 +450,60 @@ func DeletePORecord(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Data PO berhasil dihapus, status penawaran kembali ke Belum PO",
 		"data":    rec,
+	})
+}
+
+func GetActivityLogs(c *gin.Context) {
+	var logs []models.ActivityLog
+	database.DB.Order("id desc").Limit(50).Find(&logs)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total": len(logs),
+		"data":  logs,
+	})
+}
+
+func ExtractPOAI(c *gin.Context) {
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File dokumen wajib dilampirkan (form-data: 'file')"})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuka file: " + err.Error()})
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file: " + err.Error()})
+		return
+	}
+
+	mimeType := fileHeader.Header.Get("Content-Type")
+	if mimeType == "" || mimeType == "application/octet-stream" {
+		if strings.HasSuffix(strings.ToLower(fileHeader.Filename), ".pdf") {
+			mimeType = "application/pdf"
+		} else if strings.HasSuffix(strings.ToLower(fileHeader.Filename), ".png") {
+			mimeType = "image/png"
+		} else {
+			mimeType = "image/jpeg"
+		}
+	}
+
+	extracted, err := services.ExtractPOFromDocument(fileBytes, mimeType)
+	if err != nil {
+		log.Printf("[AI EXTRACT ERROR]: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal ekstraksi via AI: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Dokumen PO berhasil diekstrak oleh AI",
+		"data":    extracted,
 	})
 }

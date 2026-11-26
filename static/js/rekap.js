@@ -140,7 +140,7 @@ function downloadRekapExcel() {
   worksheet['!cols'] = colWidths;
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Argra Teknik Mandiri");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Perusahaan A");
 
   // Nama file rapi sesuai tanggal
   const timestamp = new Date().toISOString().split('T')[0];
